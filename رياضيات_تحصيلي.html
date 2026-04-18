@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>📐 الاختبار الشامل في الرياضيات | تحصيلي 2026</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary: #0b3d5f; --primary-light: #1e6f9f; --secondary: #f39c12; --accent: #c0392b;
+      --bg: #f4f7fc; --card: #ffffff; --text: #1e2a3a; --muted: #5e6f8d;
+      --radius: 20px; --shadow: 0 10px 30px rgba(0,20,40,0.08);
+      --correct: #27ae60; --wrong: #e74c3c; --skip: #e67e22;
+    }
+    body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 16px; line-height: 1.6; }
+    .screen { display: none; padding-bottom: 30px; }
+    .screen.active { display: block; }
+    .app-header { background: linear-gradient(145deg, #0b3d5f 0%, #1a5276 100%); color: white; padding: 28px 20px 20px; text-align: center; border-radius: 0 0 30px 30px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+    .app-header h1 { font-size: 1.8rem; font-weight: 800; }
+    .container { max-width: 1000px; margin: 20px auto; padding: 0 16px; }
+    .section-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; margin: 20px 0; }
+    .section-card { background: var(--card); border-radius: 16px; padding: 16px 12px; box-shadow: var(--shadow); cursor: pointer; border: 2px solid transparent; transition: all 0.2s; position: relative; border-right: 5px solid var(--primary-light); }
+    .section-card:hover { transform: translateY(-4px); }
+    .section-card.selected { border: 2px solid var(--primary); background: #eef7ff; }
+    .section-card .icon { font-size: 1.7rem; margin-bottom: 6px; }
+    .section-card h3 { font-size: 0.92rem; font-weight: 700; line-height: 1.3; }
+    .q-badge { background: var(--primary-light); color: white; border-radius: 20px; padding: 2px 10px; font-size: 0.7rem; display: inline-block; margin-top: 8px; }
+    .check-mark { position: absolute; top: 10px; left: 12px; font-size: 1.1rem; display: none; }
+    .section-card.selected .check-mark { display: block; }
+    .full-exam-card { background: linear-gradient(135deg, #1a5276, #0b3d5f); color: white; border-radius: 22px; padding: 22px; text-align: center; cursor: pointer; margin-bottom: 20px; }
+    .full-exam-card.selected { border: 2px solid var(--secondary); }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 28px; border-radius: 40px; font-weight: 700; border: none; cursor: pointer; transition: 0.2s; font-family: inherit; font-size: 1rem; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
+    .btn-danger { background: var(--accent); color: white; }
+    .exam-topbar { background: white; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 30; border-bottom: 1px solid #e0e8f0; }
+    .timer-question { background: #f0f4fa; padding: 6px 16px; border-radius: 30px; font-weight: 700; font-size: 1.4rem; color: var(--primary); }
+    .timer-question.warning { color: var(--accent); animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+    .question-panel { background: var(--card); border-radius: 24px; padding: 24px 20px; margin: 16px 0 90px; box-shadow: var(--shadow); }
+    .q-meta { color: var(--muted); font-size: 0.85rem; margin-bottom: 10px; display: flex; justify-content: space-between; }
+    .q-text { font-size: 1.15rem; font-weight: 700; margin-bottom: 22px; line-height: 1.7; }
+    .options-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .option-item { background: #f9fbfd; border: 2px solid #dde3ed; border-radius: 14px; padding: 12px 16px; cursor: pointer; display: flex; align-items: center; gap: 12px; }
+    .option-item.selected { background: #d4e6ff; border-color: var(--primary); }
+    .option-letter { width: 32px; height: 32px; background: #dde3ed; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0; }
+    .option-item.selected .option-letter { background: var(--primary); color: white; }
+    .nav-buttons { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 14px 20px; box-shadow: 0 -5px 20px rgba(0,0,0,0.1); display: flex; justify-content: space-between; z-index: 25; gap: 10px; }
+    .result-header { background: linear-gradient(145deg, #0b3d5f, #1e6f9f); color: white; padding: 30px 20px; text-align: center; }
+    .stat-cards { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 16px; }
+    .stat-card { background: white; border-radius: 14px; padding: 12px 18px; text-align: center; box-shadow: var(--shadow); min-width: 80px; }
+    .review-item { background: white; border-radius: 16px; padding: 16px; margin-bottom: 14px; box-shadow: var(--shadow); border-right: 5px solid; }
+    .review-item.correct-card { border-color: var(--correct); }
+    .review-item.wrong-card { border-color: var(--wrong); }
+    .review-item.skip-card { border-color: var(--skip); }
+    .explain-box { background: #fff8e7; padding: 14px; border-radius: 12px; margin-top: 14px; border-right: 4px solid #f1c40f; }
+    .filter-tabs { display: flex; gap: 8px; margin: 16px; flex-wrap: wrap; }
+    .filter-tab { background: #e9ecf2; border: none; padding: 8px 16px; border-radius: 30px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .filter-tab.active { background: var(--primary); color: white; }
+    .home-btn { position: fixed; top: 14px; left: 14px; background: white; border-radius: 30px; padding: 6px 14px; font-weight: 700; cursor: pointer; z-index: 50; border: 1px solid #ccc; font-size: 0.9rem; }
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 999; align-items: center; justify-content: center; padding: 20px; }
+    .modal-card { background: white; border-radius: 24px; padding: 24px; max-width: 350px; text-align: center; width: 100%; }
+    .settings-card { background: white; border-radius: 18px; padding: 16px; margin-top: 16px; }
+    .settings-card label { display: inline-flex; align-items: center; gap: 8px; margin: 8px 14px 8px 0; font-size: 0.95rem; }
+    .settings-card select { padding: 6px 10px; border-radius: 20px; border: 1px solid #ccc; font-family: inherit; }
+  </style>
+</head>
+<body>
+
+<div class="home-btn" id="homeFloatBtn" onclick="goHome()" style="display:none;">🏠 الرئيسية</div>
+
+<!-- الشاشة الرئيسية -->
+<div class="screen active" id="homeScreen">
+  <div class="app-header"><h1>📐 الاختبار الشامل في الرياضيات</h1><p>تحصيلي 2026 · جميع الوحدات في منهج الرياضيات</p></div>
+  <div class="container">
+    <div class="full-exam-card" id="fullExamCard" onclick="selectSection('all')">
+      <span style="font-size:2rem">📚</span><h2>الاختبار الشامل</h2><p>يشمل جميع الوحدات (17 وحدة)</p>
+      <span class="q-badge" style="background:#f39c12; margin-top:10px;" id="totalQCount">--- سؤال</span>
+    </div>
+    <h3 style="margin: 20px 0 10px;">📌 اختر وحدة محددة</h3>
+    <div class="section-grid" id="sectionsGrid"></div>
+    <div class="settings-card">
+      <label><span>عدد الأسئلة:</span><select id="qCountSelect"><option value="all">كل الأسئلة</option><option value="10">10</option><option value="20">20</option><option value="30">30</option><option value="50">50</option></select></label>
+      <label><input type="checkbox" id="shuffleCheck" checked> خلط عشوائي</label>
+      <label><input type="checkbox" id="timerCheck" checked> مؤقت دقيقتان</label>
+    </div>
+    <div style="text-align:center; margin: 24px 0;"><button class="btn btn-primary" id="startBtn" onclick="startExam()" disabled style="padding:14px 44px;">🚀 ابدأ الاختبار</button></div>
+  </div>
+</div>
+
+<!-- شاشة الاختبار -->
+<div class="screen" id="examScreen">
+  <div class="exam-topbar">
+    <div><strong id="examTitleSpan">الاختبار</strong> <span style="color:var(--muted); font-size:0.85rem;" id="progressText">0/0</span></div>
+    <div class="timer-question" id="questionTimer">02:00</div>
+  </div>
+  <div class="container">
+    <div class="question-panel" id="questionPanel"></div>
+  </div>
+  <div class="nav-buttons">
+    <button class="btn btn-outline" onclick="prevQuestion()" id="prevBtn">▶ السابق</button>
+    <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">التالي ◀</button>
+  </div>
+</div>
+
+<!-- شاشة النتائج -->
+<div class="screen" id="resultsScreen">
+  <div class="result-header">
+    <h2>🎉 انتهى الاختبار</h2>
+    <div style="font-size:3rem; font-weight:800; margin:12px 0;" id="finalScore">0%</div>
+    <div id="gradeMsg" style="font-size:1.2rem;">جيد</div>
+  </div>
+  <div class="stat-cards">
+    <div class="stat-card"><div style="color:var(--correct); font-size:1.6rem; font-weight:800;" id="correctStat">0</div><div>صحيح</div></div>
+    <div class="stat-card"><div style="color:var(--wrong); font-size:1.6rem; font-weight:800;" id="wrongStat">0</div><div>خطأ</div></div>
+    <div class="stat-card"><div style="color:var(--skip); font-size:1.6rem; font-weight:800;" id="skipStat">0</div><div>تخطى</div></div>
+  </div>
+  <div style="text-align:center; margin:16px;">
+    <button class="btn btn-danger" id="retestWrongBtn" onclick="startRetestWrong()" style="display:none;">🔁 راجع الأخطاء</button>
+    <button class="btn btn-outline" onclick="restartSameExam()">🔄 إعادة</button>
+    <button class="btn btn-primary" onclick="goHome()">🏠 الرئيسية</button>
+  </div>
+  <div class="container">
+    <div class="filter-tabs">
+      <button class="filter-tab active" onclick="filterReview('all', this)">الكل</button>
+      <button class="filter-tab" onclick="filterReview('wrong', this)">❌ الخطأ</button>
+      <button class="filter-tab" onclick="filterReview('correct', this)">✅ الصحيح</button>
+      <button class="filter-tab" onclick="filterReview('skip', this)">⏭ لم تجب</button>
+    </div>
+    <div id="reviewList"></div>
+  </div>
+</div>
+
+<div class="modal" id="confirmModal"><div class="modal-card"><h3>إنهاء الاختبار؟</h3><p id="modalMsg">لديك أسئلة غير مجابة</p><div style="display:flex; gap:10px; margin-top:18px; justify-content:center;"><button class="btn btn-primary" onclick="forceEndExam()">نعم</button><button class="btn btn-outline" onclick="closeModal()">متابعة</button></div></div></div>
+
+<script>
+
+const MATH_SECTIONS = [
+  { id: "m1", name: "المنطق الرياضي والهندسة", icon: "📐", color: "#2c3e50" },
+  { id: "m2", name: "المثلثات والمضلعات", icon: "🔺", color: "#16a085" },
+  { id: "m3", name: "الأشكال الرباعية والتشابه والتحويلات", icon: "🔲", color: "#8e44ad" },
+  { id: "m4", name: "الدائرة", icon: "⭕", color: "#c0392b" },
+  { id: "m5", name: "الدوال والمتباينات والمصفوفات", icon: "📊", color: "#e67e22" },
+  { id: "m6", name: "كثيرات الحدود ودوالها", icon: "🧮", color: "#2980b9" },
+  { id: "m7", name: "الدوال: العكسية والجذرية والنسبية", icon: "📈", color: "#f39c12" },
+  { id: "m8", name: "المتتابعات والمتسلسلات", icon: "∑", color: "#27ae60" },
+  { id: "m9", name: "الاحتمالات والإحصاء", icon: "🎲", color: "#34495e" },
+  { id: "m10", name: "حساب المثلثات", icon: "📏", color: "#9b59b6" },
+  { id: "m11", name: "تحليل الدوال والتحويلات الهندسية", icon: "🔄", color: "#1abc9c" },
+  { id: "m12", name: "الدوال: الأسية واللوغاريتمية", icon: "📉", color: "#d35400" },
+  { id: "m13", name: "القطوع المخروطية", icon: "🎯", color: "#7f8c8d" },
+  { id: "m14", name: "المتجهات", icon: "➡️", color: "#c0392b" },
+  { id: "m15", name: "الإحداثيات القطبية", icon: "🧭", color: "#16a085" },
+  { id: "m16", name: "النهايات", icon: "∂", color: "#8e44ad" },
+  { id: "m17", name: "الاشتقاق والتكامل", icon: "∫", color: "#2c3e50" }
+]
+const ALL_MATH_QUESTIONS = [
+  {id:1, section:"m1", q:"أي التالي يُعدّ مثالاً مضاداً للعبارة «كل عدد يقبل القسمة على 3 يقبل القسمة على 6»؟", options:["العدد 12", "العدد 9", "العدد 18", "العدد 30"], correct:1, exp:"المثال المضاد يُثبت خطأ العبارة. العدد 9 يقبل القسمة على 3 (9÷3=3) لكن لا يقبل القسمة على 6، فهو مثال مضاد يكفي لإبطال العبارة."},
+  {id:2, section:"m1", q:"العبارة: إذا كان الشكل مربعاً فإنه مستطيل. المعاكس (العكس) لها هو:", options:["إذا كان الشكل مستطيلاً فإنه مربع", "إذا لم يكن الشكل مربعاً فليس مستطيلاً", "إذا لم يكن الشكل مستطيلاً فليس مربعاً", "لا شيء مما سبق"], correct:0, exp:"معاكس العبارة الشرطية p→q هو q→p. نبدل الفرض والنتيجة فنحصل على: إذا كان مستطيلاً فإنه مربع (ملاحظة: هذه العبارة ليست صحيحة دائماً، وهذا ما يوضح الفرق بين العبارة ومعاكسها)."},
+  {id:3, section:"m1", q:"المعاكس الإيجابي (عكس النقيض) للعبارة p → q هو:", options:["q → p", "~p → ~q", "~q → ~p", "p → ~q"], correct:2, exp:"المعاكس الإيجابي: ننفي الطرفين ونعكس الترتيب. للعبارة p→q يكون ~q→~p، وهو مكافئ منطقياً للعبارة الأصلية."},
+  {id:4, section:"m1", q:"إذا كانت العبارتان p، q صائبتين، فإن p ∧ q:", options:["صائبة", "خاطئة", "لا يمكن تحديدها", "متساوية"], correct:0, exp:"العطف (∧) صائب فقط إذا كانت العبارتان صائبتين معاً. هنا كلاهما صائب فالعطف صائب."},
+  {id:5, section:"m1", q:"نفي العبارة «x > 5» هو:", options:["x < 5", "x ≤ 5", "x ≥ 5", "x ≠ 5"], correct:1, exp:"نفي «أكبر من» هو «أقل من أو يساوي». نفي x > 5 هو x ≤ 5."},
+  {id:6, section:"m1", q:"طريقة البرهان التي نفترض فيها نقيض المطلوب ونستخرج تناقضاً تسمى:", options:["البرهان المباشر", "البرهان بالاستقراء", "البرهان بالتناقض", "البرهان بالمثال المضاد"], correct:2, exp:"البرهان بالتناقض (إثبات الخلف): نفترض صحة نقيض ما نريد إثباته، ثم نصل إلى تناقض، فنستنتج صحة الأصل."},
+  {id:7, section:"m1", q:"إذا كانت زاويتان متكاملتين ونسبة قياسيهما 2:3، فإن قياس الزاوية الأكبر:", options:["72°", "108°", "120°", "144°"], correct:1, exp:"المتكاملتان مجموعهما 180°. 2x + 3x = 180 ⟹ x = 36. الأكبر = 3(36) = 108°."},
+  {id:8, section:"m1", q:"إذا كانت زاويتان متتامتان وقياس إحداهما أكبر من الأخرى بـ 20°، فإن قياس الزاوية الصغرى:", options:["30°", "35°", "45°", "55°"], correct:1, exp:"المتتامتان مجموعهما 90°. x + (x+20) = 90 ⟹ 2x = 70 ⟹ x = 35°."},
+  {id:9, section:"m1", q:"زاويتان متقابلتان بالرأس، قياس إحداهما (3x+10)° والأخرى (5x-20)°، فإن x =", options:["10", "15", "20", "30"], correct:1, exp:"المتقابلتان بالرأس متطابقتان: 3x + 10 = 5x - 20 ⟹ 2x = 30 ⟹ x = 15."},
+  {id:10, section:"m1", q:"إذا كانت زاوية قياسها (2x+15)° مكملة لزاوية قياسها (4x-5)°، فإن x =", options:["17", "23", "28.3", "56.7"], correct:2, exp:"المكملتان مجموعهما 180°. (2x+15) + (4x-5) = 180 ⟹ 6x = 170 ⟹ x ≈ 28.3."},
+  {id:11, section:"m1", q:"الزاويتان المتجاورتان على مستقيم:", options:["متطابقتان", "متكاملتان", "متتامتان", "متعامدتان"], correct:1, exp:"الزاويتان على مستقيم واحد (خط مستقيم زاويته 180°) متكاملتان."},
+  {id:12, section:"m1", q:"عند قطع مستقيمين متوازيين بقاطع، الزاويتان المتبادلتان داخلياً:", options:["متطابقتان", "متكاملتان", "متتامتان", "مختلفتان"], correct:0, exp:"الزاويتان المتبادلتان داخلياً بين مستقيمين متوازيين متطابقتان في القياس."},
+  {id:13, section:"m1", q:"إذا قطع مستقيم مستقيمين متوازيين وكانت إحدى الزوايا الداخلية في جهة واحدة قياسها 75°، فإن الأخرى قياسها:", options:["75°", "90°", "105°", "180°"], correct:2, exp:"الداخليتان في جهة واحدة متكاملتان عند التوازي: 180° - 75° = 105°."},
+  {id:14, section:"m1", q:"ما قيمة x إذا كان مستقيمان متوازيان وزاويتان متناظرتان قياسهما (4x+10)° و (6x-20)°؟", options:["10", "15", "20", "25"], correct:1, exp:"المتناظرتان متطابقتان عند التوازي: 4x + 10 = 6x - 20 ⟹ 2x = 30 ⟹ x = 15."},
+  {id:15, section:"m1", q:"زاويتان متبادلتان خارجياً قياساهما (3x+12)° و (5x-28)°، إذا كان المستقيمان متوازيين فإن x =", options:["10", "15", "20", "25"], correct:2, exp:"المتبادلتان خارجياً متطابقتان: 3x + 12 = 5x - 28 ⟹ 2x = 40 ⟹ x = 20."},
+  {id:16, section:"m1", q:"المستقيمان اللذان لا يلتقيان ولا يقعان في مستوى واحد يسميان:", options:["متوازيين", "متعامدين", "متخالفين", "متقاطعين"], correct:2, exp:"المستقيمان المتخالفان لا يقعان في مستوى واحد ولا يلتقيان. (المتوازيان في مستوى واحد ولا يلتقيان)."},
+  {id:17, section:"m1", q:"ميل المستقيم المار بالنقطتين (1, 4) و (5, 12) يساوي:", options:["2", "3", "4", "8"], correct:0, exp:"m = (y₂-y₁)/(x₂-x₁) = (12-4)/(5-1) = 8/4 = 2."},
+  {id:18, section:"m1", q:"ميل المستقيم المار بالنقطتين (-3, 2) و (5, -6) يساوي:", options:["-1", "1", "-8", "8"], correct:0, exp:"m = (-6-2)/(5-(-3)) = -8/8 = -1."},
+  {id:19, section:"m1", q:"ميل المستقيم الأفقي يساوي:", options:["0", "1", "غير معرف", "لا نهائي"], correct:0, exp:"المستقيم الأفقي y ثابت، فلا يتغير y مع x: الميل = 0."},
+  {id:20, section:"m1", q:"ميل المستقيم الرأسي (العمودي):", options:["0", "1", "غير معرف", "-1"], correct:2, exp:"المستقيم الرأسي x ثابت، والمقام في صيغة الميل (x₂-x₁) = 0، فالميل غير معرف."},
+  {id:21, section:"m1", q:"معادلة مستقيم ميله 3 ويمر بالنقطة (2, 5):", options:["y = 3x - 1", "y = 3x + 1", "y = 3x - 5", "y = 3x + 11"], correct:0, exp:"y - 5 = 3(x - 2) ⟹ y = 3x - 6 + 5 = 3x - 1."},
+  {id:22, section:"m1", q:"معادلة المستقيم الذي مقطعه الصادي 4 وميله -2:", options:["y = -2x + 4", "y = 2x + 4", "y = -2x - 4", "y = 4x - 2"], correct:0, exp:"الصيغة الميلية y = mx + c بـ m = -2 و c = 4: y = -2x + 4."},
+  {id:23, section:"m1", q:"ميل المستقيم 3x + 2y = 12 يساوي:", options:["3", "-3/2", "2/3", "-2/3"], correct:1, exp:"نحل لـ y: 2y = -3x + 12 ⟹ y = -(3/2)x + 6. الميل = -3/2."},
+  {id:24, section:"m1", q:"المستقيمان y = 2x + 3 و y = 2x - 7:", options:["متعامدان", "متوازيان", "متقاطعان", "متطابقان"], correct:1, exp:"لهما الميل نفسه (2) ومقطعان صاديان مختلفان، فهما متوازيان."},
+  {id:25, section:"m1", q:"المستقيمان y = 3x + 1 و y = -(1/3)x + 5:", options:["متوازيان", "متعامدان", "متطابقان", "لا علاقة"], correct:1, exp:"حاصل ضرب الميلين = 3 × (-1/3) = -1، فهما متعامدان."},
+  {id:26, section:"m1", q:"ميل المستقيم العمودي على y = 4x - 2:", options:["4", "-4", "1/4", "-1/4"], correct:3, exp:"ميل العمودي = -1/ميل الأصلي = -1/4."},
+  {id:27, section:"m1", q:"معادلة المستقيم المار بـ (0, -3) وموازٍ لـ y = 2x + 5:", options:["y = 2x - 3", "y = -2x - 3", "y = 2x + 3", "y = -(1/2)x - 3"], correct:0, exp:"للموازي نفس الميل (2)، والنقطة (0, -3) تعطي المقطع الصادي c = -3. فـ y = 2x - 3."},
+  {id:28, section:"m1", q:"البعد بين النقطتين (2, 3) و (8, 11) يساوي:", options:["6", "8", "10", "14"], correct:2, exp:"d = √((8-2)² + (11-3)²) = √(36+64) = √100 = 10."},
+  {id:29, section:"m1", q:"نقطة منتصف القطعة بين (-4, 6) و (8, -2) هي:", options:["(2, 2)", "(4, 4)", "(12, 8)", "(-2, 2)"], correct:0, exp:"المنتصف = ((x₁+x₂)/2, (y₁+y₂)/2) = ((-4+8)/2, (6+(-2))/2) = (2, 2)."},
+  {id:30, section:"m1", q:"إذا كانت (3, y) منتصف القطعة بين (1, 2) و (5, 6)، فإن y =", options:["2", "4", "6", "8"], correct:1, exp:"y-منتصف = (2+6)/2 = 4."},
+  {id:31, section:"m1", q:"المسافة من النقطة (0, 0) إلى (6, 8):", options:["10", "14", "48", "6"], correct:0, exp:"d = √(36+64) = √100 = 10. (ثلاثية فيثاغوري 6-8-10)."},
+  {id:32, section:"m1", q:"إذا كان المستقيمان y = mx و y = 4x - 3 متوازيين، فإن m =", options:["-4", "-1/4", "1/4", "4"], correct:3, exp:"للتوازي الميلان متساويان. m = 4."},
+  {id:33, section:"m1", q:"في متوازي المستطيلات، القطر يمكن حسابه بـ:", options:["الطول + العرض + الارتفاع", "√(الطول² + العرض² + الارتفاع²)", "2(الطول + العرض + الارتفاع)", "الطول × العرض × الارتفاع"], correct:1, exp:"قطر متوازي المستطيلات = √(ط² + ع² + ف²) بتطبيق فيثاغورس مرتين."},
+  {id:34, section:"m1", q:"إذا كان طول ضلعين في مثلث قائم 5 و 12، فطول الوتر:", options:["13", "17", "119", "169"], correct:0, exp:"بفيثاغورس: الوتر = √(25+144) = √169 = 13. (ثلاثية 5-12-13 شهيرة)."},
+  {id:35, section:"m2", q:"مثلث قياسات زواياه 40°، 60°، 80°، نوعه:", options:["قائم", "منفرج", "حاد", "متطابق"], correct:2, exp:"جميع الزوايا أقل من 90°، فالمثلث حاد الزوايا. ليس قائماً (لا توجد 90°) ولا منفرجاً (لا توجد > 90°)."},
+  {id:36, section:"m2", q:"مجموع قياسات زوايا المثلث يساوي:", options:["90°", "180°", "270°", "360°"], correct:1, exp:"مجموع الزوايا الداخلية لأي مثلث = 180°. قاعدة أساسية في الهندسة."},
+  {id:37, section:"m2", q:"في مثلث متطابق الأضلاع، قياس كل زاوية:", options:["45°", "60°", "90°", "120°"], correct:1, exp:"الزوايا الثلاث متساوية ومجموعها 180°. كل زاوية = 60°."},
+  {id:38, section:"m2", q:"في مثلث متطابق الضلعين، زاويتا القاعدة:", options:["متساويتان", "مختلفتان", "قائمتان", "متكاملتان"], correct:0, exp:"خاصية: في المثلث المتطابق الضلعين، الزاويتان المقابلتان للضلعين المتطابقين متساويتان في القياس."},
+  {id:39, section:"m2", q:"مثلث متطابق الضلعين زاوية الرأس فيه 40°، فقياس كل زاوية قاعدة:", options:["40°", "50°", "60°", "70°"], correct:3, exp:"مجموع زاويتي القاعدة = 180° - 40° = 140°. وهما متساويتان فكل واحدة = 70°."},
+  {id:40, section:"m2", q:"الزاوية الخارجية للمثلث تساوي:", options:["الزاوية الداخلية المجاورة", "مجموع الزاويتين الداخليتين البعيدتين", "ضعف الزاوية الداخلية", "90°"], correct:1, exp:"نظرية: الزاوية الخارجية = مجموع الزاويتين الداخليتين البعيدتين عنها (اللتين لا تجاورانها)."},
+  {id:41, section:"m2", q:"في مثلث ABC، إذا كانت الزاوية الخارجية عند C = 130°، وإحدى الداخليتين البعيدتين 45°، فالأخرى:", options:["85°", "95°", "175°", "45°"], correct:0, exp:"الخارجية = مجموع الداخليتين البعيدتين: 130° = 45° + x ⟹ x = 85°."},
+  {id:42, section:"m2", q:"أطوال أضلاع مثلث 7، 9، 11. نوعه حسب الأضلاع:", options:["متطابق الأضلاع", "متطابق الضلعين", "مختلف الأضلاع", "قائم"], correct:2, exp:"الأضلاع الثلاثة مختلفة فهو مختلف الأضلاع (Scalene)."},
+  {id:43, section:"m2", q:"متباينة المثلث تنص على أن مجموع طولي ضلعين في المثلث:", options:["يساوي الثالث", "أكبر من الثالث", "أصغر من الثالث", "ضعف الثالث"], correct:1, exp:"متباينة المثلث: مجموع طولي أي ضلعين أكبر تماماً من الضلع الثالث."},
+  {id:44, section:"m2", q:"أي الأعداد التالية لا يمكن أن تمثل أضلاع مثلث؟", options:["3، 4، 5", "5، 7، 11", "2، 3، 7", "6، 8، 10"], correct:2, exp:"بمتباينة المثلث: 2 + 3 = 5 < 7، فلا تحقق الشرط. الباقي يحقق (المجموع > الضلع الثالث)."},
+  {id:45, section:"m2", q:"إذا كان طول ضلعين 8 و 15، ما أكبر عدد صحيح يمكن أن يكون الضلع الثالث؟", options:["7", "22", "23", "17"], correct:1, exp:"بمتباينة المثلث: |15-8| < n < 15+8 ⟹ 7 < n < 23. أكبر صحيح = 22."},
+  {id:46, section:"m2", q:"في المثلث القائم، الضلع المقابل للزاوية القائمة يسمى:", options:["الساق", "الوتر", "الارتفاع", "القاعدة"], correct:1, exp:"الوتر هو أطول ضلع في المثلث القائم، ويقابل الزاوية القائمة (90°)."},
+  {id:47, section:"m2", q:"مثلث قائم ضلعاه القائمان 9 و 12، وتره:", options:["13", "15", "18", "21"], correct:1, exp:"بفيثاغورس: الوتر = √(81+144) = √225 = 15. (ثلاثية 9-12-15 = 3×(3-4-5))."},
+  {id:48, section:"m2", q:"مثلث قائم وتره 25 وأحد ضلعيه 7، الضلع الآخر:", options:["18", "20", "24", "26"], correct:2, exp:"الضلع = √(625 - 49) = √576 = 24. (ثلاثية 7-24-25)."},
+  {id:49, section:"m2", q:"الارتفاع في المثلث هو:", options:["ضلع من الأضلاع", "قطعة من الرأس عمودية على الضلع المقابل", "القطعة من الرأس لمنتصف الضلع المقابل", "منصف الزاوية"], correct:1, exp:"الارتفاع = القطعة النازلة من الرأس وعمودية على الضلع المقابل (أو امتداده)."},
+  {id:50, section:"m2", q:"القطعة المتوسطة في المثلث:", options:["عمودية على الضلع المقابل", "تصل من الرأس إلى منتصف الضلع المقابل", "تنصف الزاوية", "توازي الضلع المقابل"], correct:1, exp:"القطعة المتوسطة تصل من الرأس إلى منتصف الضلع المقابل (قد تختلف عن الارتفاع)."},
+  {id:51, section:"m2", q:"نقطة تلاقي الأعمدة الثلاثة (ارتفاعات المثلث) تسمى:", options:["المركز", "القائم", "الملتقى", "الوسط"], correct:1, exp:"ملتقى الارتفاعات يسمى القائم (Orthocenter) للمثلث."},
+  {id:52, section:"m2", q:"نقطة تلاقي القطع المتوسطة الثلاثة تسمى:", options:["المركز", "القائم", "الوسط الهندسي", "مركز الثقل"], correct:3, exp:"ملتقى المتوسطات = مركز الثقل (Centroid)، ويقسم كل متوسط بنسبة 2:1 من الرأس."},
+  {id:53, section:"m2", q:"في مثلث ABC، ما قيمة x إذا كانت الأضلاع متطابقة وطول ضلعيه 3x - 2 و 2x + 5؟", options:["3", "5", "7", "9"], correct:2, exp:"3x - 2 = 2x + 5 ⟹ x = 7."},
+  {id:54, section:"m2", q:"مجموع الزوايا الداخلية للمضلع الرباعي:", options:["180°", "270°", "360°", "540°"], correct:2, exp:"S = 180°(n-2) = 180°(4-2) = 360°."},
+  {id:55, section:"m2", q:"مجموع الزوايا الداخلية للمضلع السداسي:", options:["360°", "540°", "720°", "900°"], correct:2, exp:"S = 180°(6-2) = 720°."},
+  {id:56, section:"m2", q:"قياس الزاوية الداخلية للمضلع الخماسي المنتظم:", options:["108°", "120°", "135°", "144°"], correct:0, exp:"m = 180°(5-2)/5 = 540°/5 = 108°."},
+  {id:57, section:"m2", q:"قياس الزاوية الداخلية للمضلع السباعي المنتظم:", options:["108°", "120°", "128.57°", "135°"], correct:2, exp:"m = 180°(7-2)/7 = 900°/7 ≈ 128.57°."},
+  {id:58, section:"m2", q:"قياس الزاوية الداخلية للمضلع العشاري المنتظم:", options:["120°", "135°", "144°", "150°"], correct:2, exp:"m = 180°(10-2)/10 = 1440°/10 = 144°."},
+  {id:59, section:"m2", q:"مجموع الزوايا الخارجية لأي مضلع محدب:", options:["180°", "270°", "360°", "يعتمد على عدد الأضلاع"], correct:2, exp:"قاعدة ثابتة: مجموع الزوايا الخارجية (زاوية عند كل رأس) لأي مضلع محدب = 360°."},
+  {id:60, section:"m2", q:"قياس الزاوية الخارجية للمضلع الثماني المنتظم:", options:["30°", "45°", "60°", "90°"], correct:1, exp:"الخارجية = 360°/n = 360°/8 = 45°."},
+  {id:61, section:"m2", q:"إذا كانت الزاوية الداخلية لمضلع منتظم 150°، فعدد أضلاعه:", options:["8", "10", "12", "15"], correct:2, exp:"الخارجية = 180° - 150° = 30°. عدد الأضلاع = 360°/30° = 12."},
+  {id:62, section:"m2", q:"إذا كان مجموع الزوايا الداخلية لمضلع منتظم 1080°، فعدد أضلاعه:", options:["6", "7", "8", "9"], correct:2, exp:"180°(n-2) = 1080° ⟹ n-2 = 6 ⟹ n = 8."},
+  {id:63, section:"m2", q:"كم عدد أقطار المضلع الخماسي؟", options:["3", "5", "6", "10"], correct:1, exp:"عدد الأقطار = n(n-3)/2 = 5(2)/2 = 5."},
+  {id:64, section:"m2", q:"كم عدد أقطار المضلع السباعي؟", options:["7", "10", "14", "21"], correct:2, exp:"n(n-3)/2 = 7(4)/2 = 14."},
+  {id:65, section:"m2", q:"مساحة المثلث التي قاعدته 8 وارتفاعه 6:", options:["14", "24", "48", "96"], correct:1, exp:"المساحة = (1/2) × القاعدة × الارتفاع = (1/2)(8)(6) = 24."},
+  {id:66, section:"m2", q:"مساحة المثلث الذي قاعدته 10 وارتفاعه 7:", options:["17", "35", "70", "140"], correct:1, exp:"(1/2)(10)(7) = 35."},
+  {id:67, section:"m2", q:"محيط المثلث المتطابق الأضلاع الذي طول ضلعه 8:", options:["16", "24", "32", "64"], correct:1, exp:"المحيط = 3 × الضلع = 3(8) = 24."},
+  {id:68, section:"m2", q:"مثلث متساوي الساقين، قاعدته 10 وأحد ساقيه 13، ارتفاعه إلى القاعدة:", options:["10", "12", "15", "11"], correct:1, exp:"الارتفاع ينصّف القاعدة. بفيثاغورس: h² + 5² = 13² ⟹ h² = 144 ⟹ h = 12."},
+  {id:69, section:"m2", q:"في مثلث القائم متطابق الساقين، النسبة بين الساق والوتر:", options:["1 : 2", "1 : √2", "1 : √3", "√2 : 1"], correct:1, exp:"إذا كان الساق = a فالوتر = a√2. فالنسبة a : a√2 = 1 : √2."},
+  {id:70, section:"m2", q:"في المثلث بزوايا 30°-60°-90°، النسبة بين الأضلاع (من الأقصر للأطول):", options:["1 : 2 : √3", "1 : √3 : 2", "√3 : 2 : 1", "1 : 1 : √2"], correct:1, exp:"المثلث الخاص 30-60-90: الأضلاع بنسبة 1 : √3 : 2 (مقابل 30°، مقابل 60°، الوتر)."},
+  {id:71, section:"m2", q:"في مثلث 30°-60°-90° الوتر = 10، الضلع المقابل للزاوية 30°:", options:["5", "5√3", "10", "10√3"], correct:0, exp:"الضلع المقابل لـ 30° = نصف الوتر = 10/2 = 5."},
+  {id:72, section:"m3", q:"في متوازي الأضلاع، كل ضلعين متقابلين:", options:["متطابقان ومتوازيان", "متعامدان", "متكاملان", "غير متطابقين"], correct:0, exp:"خاصية أساسية: الأضلاع المتقابلة في متوازي الأضلاع متطابقة ومتوازية."},
+  {id:73, section:"m3", q:"في متوازي الأضلاع، الزاويتان المتقابلتان:", options:["متكاملتان", "متطابقتان", "متتامتان", "قائمتان"], correct:1, exp:"الزاويتان المتقابلتان في متوازي الأضلاع متطابقتان. والمتجاورتان متكاملتان."},
+  {id:74, section:"m3", q:"في متوازي الأضلاع، قطراه:", options:["متطابقان", "متعامدان", "ينصّف كل منهما الآخر", "متوازيان"], correct:2, exp:"خاصية محددة لمتوازي الأضلاع: القطران ينصّف كل منهما الآخر (نقطة التقاطع منتصف لكليهما)."},
+  {id:75, section:"m3", q:"الشكل الرباعي الذي قطراه متطابقان ومتعامدان:", options:["متوازي الأضلاع", "المستطيل", "المعين", "المربع"], correct:3, exp:"المربع يجمع خصائص المستطيل (قطران متطابقان) والمعين (قطران متعامدان)."},
+  {id:76, section:"m3", q:"في المستطيل:", options:["جميع الأضلاع متطابقة", "القطران متطابقان", "القطران متعامدان", "القطران غير متساويين"], correct:1, exp:"المستطيل: قطراه متطابقان وينصّف كل منهما الآخر، لكنهما غير متعامدين (عكس المعين)."},
+  {id:77, section:"m3", q:"في المعين:", options:["جميع الزوايا قائمة", "القطران متطابقان", "القطران متعامدان", "الأضلاع المتقابلة فقط متطابقة"], correct:2, exp:"المعين: جميع أضلاعه متطابقة، قطراه متعامدان وينصّف كل منهما الآخر."},
+  {id:78, section:"m3", q:"محيط مستطيل طوله 15 وعرضه 8:", options:["23", "46", "92", "120"], correct:1, exp:"المحيط = 2(الطول + العرض) = 2(15+8) = 46."},
+  {id:79, section:"m3", q:"مساحة مستطيل طوله 12 وعرضه 9:", options:["21", "42", "108", "216"], correct:2, exp:"المساحة = الطول × العرض = 12 × 9 = 108."},
+  {id:80, section:"m3", q:"قطر مربع طول ضلعه 7:", options:["7", "7√2", "14", "49"], correct:1, exp:"قطر المربع = الضلع × √2 = 7√2."},
+  {id:81, section:"m3", q:"مساحة مربع محيطه 36:", options:["81", "144", "324", "36"], correct:0, exp:"الضلع = 36/4 = 9. المساحة = 9² = 81."},
+  {id:82, section:"m3", q:"في المعين قطراه 6 و 8، مساحته:", options:["14", "24", "48", "96"], correct:1, exp:"مساحة المعين = (1/2) × حاصل ضرب القطرين = (1/2)(6)(8) = 24."},
+  {id:83, section:"m3", q:"في المعين، إذا كان أحد قطريه 10 والآخر 24، فطول ضلعه:", options:["12", "13", "17", "26"], correct:1, exp:"أنصاف القطرين 5 و 12 تشكل مع الضلع مثلثاً قائماً. الضلع = √(25+144) = √169 = 13."},
+  {id:84, section:"m3", q:"شبه المنحرف، القطعة المتوسطة (المتوسط) طولها:", options:["مجموع القاعدتين", "نصف مجموع القاعدتين", "الفرق بين القاعدتين", "ضعف القاعدة الصغرى"], correct:1, exp:"القطعة المتوسطة في شبه المنحرف توازي القاعدتين وطولها = (مجموعهما)/2."},
+  {id:85, section:"m3", q:"في شبه منحرف قاعدتاه 12 و 20، طول القطعة المتوسطة:", options:["8", "16", "32", "40"], correct:1, exp:"المتوسط = (12+20)/2 = 16."},
+  {id:86, section:"m3", q:"مساحة شبه المنحرف الذي قاعدتاه 10 و 14 وارتفاعه 8:", options:["22", "96", "112", "192"], correct:1, exp:"المساحة = (1/2)(مجموع القاعدتين)(الارتفاع) = (1/2)(24)(8) = 96."},
+  {id:87, section:"m3", q:"الشكل الرباعي الذي له زوج واحد فقط من الأضلاع المتوازية:", options:["متوازي الأضلاع", "المستطيل", "شبه المنحرف", "المعين"], correct:2, exp:"شبه المنحرف: يحوي زوجاً واحداً من الأضلاع المتوازية (القاعدتان) فقط."},
+  {id:88, section:"m3", q:"المثلثان متشابهان إذا:", options:["كانت زواياهما متطابقة", "كانت أضلاعهما متطابقة", "كانا متطابقين", "كان لهما نفس المساحة"], correct:0, exp:"التشابه يعني تطابق الزوايا المتناظرة وتناسب الأضلاع المتناظرة. التطابق في الزوايا يكفي في المثلث."},
+  {id:89, section:"m3", q:"مثلثان متشابهان، نسبة أضلاعهما 3:5، نسبة محيطيهما:", options:["9:25", "3:5", "5:3", "3:8"], correct:1, exp:"نسبة المحيطات = نسبة التشابه = 3:5."},
+  {id:90, section:"m3", q:"مثلثان متشابهان، نسبة أضلاعهما 2:3، نسبة مساحتيهما:", options:["2:3", "4:9", "6:9", "8:27"], correct:1, exp:"نسبة المساحات = (نسبة التشابه)² = 2²:3² = 4:9."},
+  {id:91, section:"m3", q:"في مثلثين متشابهين، أطوال أضلاع الأصغر 6، 8، 10، فإذا كان نظير الضلع 8 في الأكبر 12، فنسبة التشابه:", options:["2:3", "3:2", "4:6", "8:12"], correct:0, exp:"نسبة التشابه = 8:12 = 2:3. الأصغر إلى الأكبر."},
+  {id:92, section:"m3", q:"شجرة تُلقي ظلاً طوله 12 m، وعمود يُلقي ظلاً طوله 3 m وارتفاعه 2 m. ارتفاع الشجرة (بالتشابه):", options:["6 m", "8 m", "18 m", "24 m"], correct:1, exp:"بالتشابه (نفس زاوية الشمس): ارتفاع الشجرة / 12 = 2 / 3 ⟹ الارتفاع = 8 m."},
+  {id:93, section:"m3", q:"القطعة الواصلة بين منتصفي ضلعي مثلث:", options:["توازي الضلع الثالث وطولها نصفه", "عمودية على الضلع الثالث", "تساوي الضلع الثالث", "تقسم المثلث لمتساويين"], correct:0, exp:"نظرية القطعة المتوسطة: توازي الضلع الثالث وطولها نصفه."},
+  {id:94, section:"m3", q:"صورة النقطة (3, 7) بالانعكاس حول المحور x:", options:["(3, -7)", "(-3, 7)", "(-3, -7)", "(7, 3)"], correct:0, exp:"الانعكاس حول محور x: (x, y) → (x, -y). نُغير إشارة y فقط."},
+  {id:95, section:"m3", q:"صورة النقطة (-4, 5) بالانعكاس حول المحور y:", options:["(-4, -5)", "(4, 5)", "(4, -5)", "(5, -4)"], correct:1, exp:"الانعكاس حول محور y: (x, y) → (-x, y). نُغير إشارة x فقط."},
+  {id:96, section:"m3", q:"صورة النقطة (2, -6) بالانعكاس حول نقطة الأصل:", options:["(2, 6)", "(-2, 6)", "(-2, -6)", "(6, 2)"], correct:1, exp:"الانعكاس حول الأصل: (x, y) → (-x, -y). (2, -6) → (-2, 6)."},
+  {id:97, section:"m3", q:"صورة النقطة (5, 2) بالانعكاس حول المستقيم y = x:", options:["(-5, -2)", "(2, 5)", "(-2, -5)", "(2, -5)"], correct:1, exp:"الانعكاس حول y = x: نبدل الإحداثيات. (x, y) → (y, x). (5, 2) → (2, 5)."},
+  {id:98, section:"m3", q:"صورة النقطة (4, 7) بعد الإزاحة (x-3, y+2):", options:["(1, 9)", "(7, 5)", "(1, 5)", "(7, 9)"], correct:0, exp:"نطبق الإزاحة: (4-3, 7+2) = (1, 9)."},
+  {id:99, section:"m3", q:"الإزاحة التي تنقل (2, 5) إلى (7, 1) هي:", options:["(x+5, y-4)", "(x-5, y+4)", "(x+5, y+4)", "(x-5, y-4)"], correct:0, exp:"التغير في x = 7-2 = 5، والتغير في y = 1-5 = -4. فالإزاحة (x+5, y-4)."},
+  {id:100, section:"m3", q:"صورة النقطة (1, 0) بالدوران 90° عكس عقارب الساعة حول الأصل:", options:["(0, 1)", "(-1, 0)", "(0, -1)", "(1, 0)"], correct:0, exp:"الدوران 90° عكس الساعة: (x, y) → (-y, x). (1, 0) → (0, 1)."},
+  {id:101, section:"m3", q:"صورة النقطة (3, -2) بالدوران 180° حول الأصل:", options:["(-3, 2)", "(3, 2)", "(-3, -2)", "(2, -3)"], correct:0, exp:"الدوران 180°: (x, y) → (-x, -y). (3, -2) → (-3, 2). (نفس التناظر حول الأصل)."},
+  {id:102, section:"m3", q:"صورة النقطة (2, 4) بتمدد معامله 3 حول الأصل:", options:["(5, 7)", "(6, 12)", "(2/3, 4/3)", "(-2, -4)"], correct:1, exp:"التمدد: (x, y) → (kx, ky). (2, 4) → (6, 12)."},
+  {id:103, section:"m3", q:"إذا كانت صورة (6, 8) بتمدد حول الأصل هي (3, 4)، فمعامل التمدد:", options:["2", "1/2", "-2", "-1/2"], correct:1, exp:"k = طول الصورة / طول الأصل = 3/6 = 1/2. أو 4/8 = 1/2."},
+  {id:104, section:"m3", q:"أي التحويلات لا يحفظ الأطوال (ليس تطابقاً)؟", options:["الإزاحة", "الدوران", "الانعكاس", "التمدد"], correct:3, exp:"التمدد (إذا |k| ≠ 1) يغير الأحجام، فليس تحويلاً تطابقياً. الباقي يحافظ على الأطوال."},
+  {id:105, section:"m3", q:"محور التماثل للدالة y = x² هو:", options:["المحور x", "المحور y", "المستقيم y = x", "نقطة الأصل"], correct:1, exp:"القطع المكافئ y = x² متماثل حول محور y (الدالة زوجية)."},
+  {id:106, section:"m3", q:"رتبة التماثل الدوراني للمضلع السداسي المنتظم:", options:["3", "4", "5", "6"], correct:3, exp:"رتبة التماثل الدوراني للمضلع المنتظم = عدد أضلاعه = 6."},
+  {id:107, section:"m3", q:"مقدار أصغر دوران يُبقي المضلع السداسي المنتظم على حاله:", options:["30°", "45°", "60°", "90°"], correct:2, exp:"أصغر زاوية دوران = 360°/n = 360°/6 = 60°."},
+  {id:108, section:"m3", q:"المربع له عدد من محاور التماثل يساوي:", options:["2", "3", "4", "6"], correct:2, exp:"للمربع 4 محاور تماثل: 2 تمر بمنتصفات الأضلاع و 2 عبر القطرين."},
+  {id:109, section:"m3", q:"الدائرة عدد محاور تماثلها:", options:["4", "8", "16", "لا نهائي"], correct:3, exp:"للدائرة عدد لا نهائي من محاور التماثل: كل قطر يمر بالمركز هو محور تماثل."},
+  {id:110, section:"m4", q:"نصف قطر دائرة محيطها 20π:", options:["5", "10", "20", "100"], correct:1, exp:"2πr = 20π ⟹ r = 10."},
+  {id:111, section:"m4", q:"مساحة دائرة نصف قطرها 6:", options:["12π", "36π", "72π", "144π"], correct:1, exp:"A = πr² = π(6²) = 36π."},
+  {id:112, section:"m4", q:"إذا كانت مساحة دائرة 49π، فنصف قطرها:", options:["5", "6", "7", "8"], correct:2, exp:"πr² = 49π ⟹ r² = 49 ⟹ r = 7."},
+  {id:113, section:"m4", q:"محيط دائرة نصف قطرها 14:", options:["7π", "14π", "28π", "196π"], correct:2, exp:"C = 2πr = 28π."},
+  {id:114, section:"m4", q:"الوتر هو:", options:["قطعة مستقيمة طرفاها على الدائرة", "نصف القطر", "قطعة من المركز إلى الدائرة", "محيط الدائرة"], correct:0, exp:"الوتر: قطعة مستقيمة طرفاها على الدائرة. أطول وتر هو القطر."},
+  {id:115, section:"m4", q:"القطر يساوي:", options:["نصف القطر", "ضعف نصف القطر", "نصف المحيط", "π × نصف القطر"], correct:1, exp:"القطر = 2 × نصف القطر. يمر بالمركز ويقسم الدائرة إلى نصفين."},
+  {id:116, section:"m4", q:"إذا كان قطر دائرة 16، فنصف قطرها:", options:["4", "8", "16", "32"], correct:1, exp:"نصف القطر = القطر / 2 = 16/2 = 8."},
+  {id:117, section:"m4", q:"الزاوية المركزية رأسها:", options:["على الدائرة", "في المركز", "خارج الدائرة", "على وتر"], correct:1, exp:"الزاوية المركزية: رأسها في مركز الدائرة وضلعاها نصفا قطر."},
+  {id:118, section:"m4", q:"قياس الزاوية المركزية يساوي:", options:["نصف القوس المقابل", "القوس المقابل", "ضعف القوس", "ثلث القوس"], correct:1, exp:"الزاوية المركزية = قياس القوس المقابل لها."},
+  {id:119, section:"m4", q:"الزاوية المحيطية رأسها:", options:["في المركز", "على الدائرة", "خارج الدائرة", "داخل الدائرة"], correct:1, exp:"الزاوية المحيطية: رأسها على الدائرة وضلعاها وتران."},
+  {id:120, section:"m4", q:"قياس الزاوية المحيطية يساوي:", options:["القوس المقابل", "نصف القوس المقابل", "ضعف القوس", "ربع القوس"], correct:1, exp:"الزاوية المحيطية = نصف قياس القوس المقابل لها."},
+  {id:121, section:"m4", q:"زاوية محيطية قياسها 40°، القوس المقابل لها قياسه:", options:["20°", "40°", "80°", "160°"], correct:2, exp:"القوس = 2 × الزاوية المحيطية = 2(40°) = 80°."},
+  {id:122, section:"m4", q:"زاوية مركزية قياسها 60°، القوس المقابل لها:", options:["30°", "60°", "120°", "90°"], correct:1, exp:"الزاوية المركزية = القوس المقابل = 60°."},
+  {id:123, section:"m4", q:"زاويتان محيطيتان مرسومتان على القوس نفسه:", options:["متكاملتان", "متطابقتان", "متتامتان", "متعامدتان"], correct:1, exp:"خاصية: الزاويتان المحيطيتان على القوس نفسه متطابقتان (لأن كليهما = نصف القوس)."},
+  {id:124, section:"m4", q:"الزاوية المحيطية المرسومة في نصف الدائرة:", options:["30°", "45°", "90°", "180°"], correct:2, exp:"نظرية طاليس: الزاوية المحيطية التي ضلعاها على قطر تكون قائمة (90°)."},
+  {id:125, section:"m4", q:"في شكل رباعي محاط بدائرة، مجموع كل زاويتين متقابلتين:", options:["90°", "180°", "270°", "360°"], correct:1, exp:"الرباعي الدائري: كل زاويتين متقابلتين متكاملتان (مجموعهما 180°)."},
+  {id:126, section:"m4", q:"المماس للدائرة:", options:["يقطعها في نقطتين", "يمسها في نقطة واحدة", "لا يلمسها", "يمر بالمركز"], correct:1, exp:"المماس: مستقيم يلمس الدائرة في نقطة واحدة (نقطة التماس)."},
+  {id:127, section:"m4", q:"المماس عند نقطة تماس يكون:", options:["موازياً لنصف القطر", "عمودياً على نصف القطر", "مساوياً لنصف القطر", "منحنياً"], correct:1, exp:"نظرية: المماس يكون عمودياً على نصف القطر المرسوم إلى نقطة التماس."},
+  {id:128, section:"m4", q:"إذا كان AB مماساً لدائرة نصف قطرها 5 عند A، وكان المركز O، فـ OA:", options:["5", "10", "عمودي على AB", "يساوي AB"], correct:2, exp:"OA = نصف القطر = 5، و OA عمودي على AB (المماس ⊥ نصف القطر عند التماس)."},
+  {id:129, section:"m4", q:"المماسان من نقطة خارج الدائرة:", options:["مختلفان في الطول", "متساويان في الطول", "متعامدان", "متوازيان"], correct:1, exp:"القطعتان المماستان من نقطة خارجية واحدة متطابقتان (متساويتان في الطول)."},
+  {id:130, section:"m4", q:"إذا كان طول المماس من نقطة خارجية 12، وبعد النقطة عن المركز 13، فنصف قطر الدائرة:", options:["3", "5", "7", "11"], correct:1, exp:"بفيثاغورس (المماس ⊥ نصف القطر): r² = 13² - 12² = 25 ⟹ r = 5."},
+  {id:131, section:"m4", q:"الأوتار المتساوية في الدائرة:", options:["تبعد بعداً متساوياً عن المركز", "تلتقي في المركز", "تكون متعامدة", "موازية"], correct:0, exp:"الأوتار المتطابقة في الدائرة نفسها تكون على أبعاد متساوية من المركز (والعكس)."},
+  {id:132, section:"m4", q:"العمود النازل من المركز على وتر:", options:["يساوي الوتر", "ينصّف الوتر", "موازٍ للوتر", "أطول من الوتر"], correct:1, exp:"العمود النازل من المركز على أي وتر يُنصّفه (والعكس: العمود المنصف للوتر يمر بالمركز)."},
+  {id:133, section:"m4", q:"معادلة دائرة مركزها (0, 0) ونصف قطرها 3:", options:["x² + y² = 3", "x² + y² = 9", "x + y = 3", "(x-3)² + y² = 0"], correct:1, exp:"الصيغة x² + y² = r² مع r = 3: x² + y² = 9."},
+  {id:134, section:"m4", q:"دائرة معادلتها (x-4)² + (y+1)² = 25، مركزها:", options:["(4, 1)", "(4, -1)", "(-4, 1)", "(-4, -1)"], correct:1, exp:"الصيغة (x-h)² + (y-k)² = r². المركز (h, k) = (4, -1)."},
+  {id:135, section:"m4", q:"دائرة معادلتها x² + y² = 100، نصف قطرها:", options:["5", "10", "50", "100"], correct:1, exp:"r² = 100 ⟹ r = 10."},
+  {id:136, section:"m4", q:"معادلة دائرة مركزها (3, -5) ونصف قطرها 4:", options:["(x+3)² + (y-5)² = 4", "(x-3)² + (y+5)² = 16", "(x-3)² + (y-5)² = 16", "(x+3)² + (y+5)² = 4"], correct:1, exp:"(x-h)² + (y-k)² = r² مع h=3, k=-5, r²=16: (x-3)² + (y+5)² = 16."},
+  {id:137, section:"m4", q:"أي النقاط التالية تقع على الدائرة x² + y² = 25؟", options:["(3, 4)", "(4, 4)", "(3, 5)", "(0, 6)"], correct:0, exp:"(3, 4): 9 + 16 = 25 ✓. (ثلاثية فيثاغورية 3-4-5)."},
+  {id:138, section:"m4", q:"مساحة القطاع الدائري في دائرة نصف قطرها 6 وزاويته المركزية 60°:", options:["π", "6π", "12π", "36π"], correct:1, exp:"مساحة القطاع = (θ/360°) × πr² = (60/360)(36π) = (1/6)(36π) = 6π."},
+  {id:139, section:"m4", q:"طول قوس في دائرة نصف قطرها 10 وزاويته المركزية 90°:", options:["5π", "10π", "20π", "2.5π"], correct:0, exp:"طول القوس = (θ/360°) × 2πr = (90/360)(20π) = (1/4)(20π) = 5π."},
+  {id:140, section:"m5", q:"مجال الدالة f(x) = √(x - 5) هو:", options:["x > 5", "x ≥ 5", "x < 5", "x ≤ 5"], correct:1, exp:"الجذر التربيعي معرَّف عندما يكون ما تحته ≥ 0: x - 5 ≥ 0 ⟹ x ≥ 5. المجال [5, ∞)."},
+  {id:141, section:"m5", q:"مجال الدالة f(x) = 1/(x² - 9) هو:", options:["ℝ - {3}", "ℝ - {-3}", "ℝ - {3, -3}", "ℝ"], correct:2, exp:"نستثني الأصفار في المقام: x² - 9 = 0 ⟹ x = ±3. المجال = ℝ - {3, -3}."},
+  {id:142, section:"m5", q:"إذا كانت f(x) = 2x² - 3x + 1 فإن f(-1) =", options:["0", "6", "-4", "2"], correct:1, exp:"f(-1) = 2(1) - 3(-1) + 1 = 2 + 3 + 1 = 6."},
+  {id:143, section:"m5", q:"مدى الدالة f(x) = x² + 2 هو:", options:["[0, ∞)", "[2, ∞)", "ℝ", "(2, ∞)"], correct:1, exp:"x² ≥ 0 فـ x² + 2 ≥ 2. المدى [2, ∞). أدنى قيمة عند x=0."},
+  {id:144, section:"m5", q:"حل المتباينة 2x - 5 > 7 هو:", options:["x > 6", "x < 6", "x ≥ 6", "x > 1"], correct:0, exp:"2x > 12 ⟹ x > 6. القسمة على موجب لا تغير الإشارة."},
+  {id:145, section:"m5", q:"حل المتباينة -3x + 2 ≤ 11 هو:", options:["x ≥ -3", "x ≤ -3", "x ≥ 3", "x ≤ 3"], correct:0, exp:"-3x ≤ 9، نقسم على -3 فتنعكس الإشارة: x ≥ -3."},
+  {id:146, section:"m5", q:"حل المتباينة |x - 2| < 5 هو:", options:["(-3, 7)", "[-3, 7]", "(-7, 3)", "x > 7"], correct:0, exp:"|x-2| < 5 ⟹ -5 < x-2 < 5 ⟹ -3 < x < 7. الفترة (-3, 7)."},
+  {id:147, section:"m5", q:"حل المتباينة |2x + 1| ≥ 3 هو:", options:["x ≤ -2 أو x ≥ 1", "-2 ≤ x ≤ 1", "(-2, 1)", "x ≥ 1"], correct:0, exp:"|2x+1| ≥ 3 ⟹ 2x+1 ≥ 3 أو 2x+1 ≤ -3 ⟹ x ≥ 1 أو x ≤ -2."},
+  {id:148, section:"m5", q:"حل المتباينة x² - 4 < 0 هو:", options:["(-2, 2)", "[-2, 2]", "(-∞, -2)∪(2, ∞)", "x > 2"], correct:0, exp:"x² < 4 ⟹ |x| < 2 ⟹ -2 < x < 2. الفترة المفتوحة (-2, 2)."},
+  {id:149, section:"m5", q:"حل المتباينة (x-1)(x+3) > 0 هو:", options:["x < -3 أو x > 1", "-3 < x < 1", "x > 1", "x < -3"], correct:0, exp:"الجذران -3 و 1. بفحص الإشارات: الحاصل موجب خارج الجذرين. الحل: x < -3 أو x > 1."},
+  {id:150, section:"m5", q:"رتبة المصفوفة التي فيها 4 صفوف و 5 أعمدة:", options:["5×4", "4×5", "9", "20"], correct:1, exp:"الرتبة تكتب صفوف × أعمدة = 4×5. عدد العناصر = 20."},
+  {id:151, section:"m5", q:"المصفوفة المربعة هي التي:", options:["عدد صفوفها يساوي عدد أعمدتها", "من رتبة 2 فقط", "كل عناصرها متساوية", "لا تحوي صفراً"], correct:0, exp:"المصفوفة المربعة n×n: عدد الصفوف = عدد الأعمدة."},
+  {id:152, section:"m5", q:"محدد المصفوفة [[3, 2], [1, 4]] يساوي:", options:["10", "14", "5", "-5"], correct:0, exp:"det = (3)(4) - (2)(1) = 12 - 2 = 10."},
+  {id:153, section:"m5", q:"محدد المصفوفة [[5, -2], [3, 4]] يساوي:", options:["14", "20", "26", "-14"], correct:2, exp:"det = (5)(4) - (-2)(3) = 20 + 6 = 26."},
+  {id:154, section:"m5", q:"محدد مصفوفة الوحدة I₂ يساوي:", options:["0", "1", "2", "-1"], correct:1, exp:"I₂ = [[1,0],[0,1]]، det = 1(1) - 0(0) = 1."},
+  {id:155, section:"m5", q:"إذا كان det(A) = 0 فإن A:", options:["قابلة للانعكاس", "غير قابلة للانعكاس", "قطرية", "صفرية"], correct:1, exp:"شرط قابلية الانعكاس: det(A) ≠ 0. إذا كان det=0 فالمصفوفة شاذة (غير قابلة للانعكاس)."},
+  {id:156, section:"m5", q:"إذا كانت A = [[1,2],[3,4]] فإن 2A =", options:["[[2,2],[3,4]]", "[[2,4],[6,8]]", "[[1,4],[6,4]]", "[[3,4],[5,6]]"], correct:1, exp:"ضرب القياسي في المصفوفة: نضرب كل عنصر في 2. [[2,4],[6,8]]."},
+  {id:157, section:"m5", q:"حاصل ضرب مصفوفة 2×3 في مصفوفة 3×4 ينتج مصفوفة رتبتها:", options:["2×4", "3×3", "2×3", "4×2"], correct:0, exp:"شرط الضرب: أعمدة الأولى = صفوف الثانية (3=3). رتبة الناتج: صفوف الأولى × أعمدة الثانية = 2×4."},
+  {id:158, section:"m5", q:"إذا كان A·B = I فإن B = :", options:["Aᵀ", "A⁻¹", "-A", "A²"], correct:1, exp:"تعريف المعكوس: A·A⁻¹ = I. إذن B = A⁻¹."},
+  {id:159, section:"m5", q:"خاصية det(AB) =", options:["det(A) + det(B)", "det(A) · det(B)", "det(A) - det(B)", "0"], correct:1, exp:"خاصية المحدد: det(AB) = det(A) · det(B)."},
+  {id:160, section:"m5", q:"مصفوفة قطرية من الرتبة n، محددها:", options:["مجموع العناصر القطرية", "حاصل ضرب العناصر القطرية", "0", "1"], correct:1, exp:"في المصفوفة القطرية (العناصر خارج القطر = 0): المحدد = حاصل ضرب عناصر القطر الرئيسي."},
+  {id:161, section:"m5", q:"إذا كان det(A) = 4 و A من الرتبة 2×2 فإن det(3A) =", options:["12", "24", "36", "4"], correct:2, exp:"للمصفوفة n×n: det(kA) = kⁿ · det(A). هنا n=2: det(3A) = 9·4 = 36."},
+  {id:162, section:"m5", q:"مصفوفة منقول A تُحصل عليها بـ:", options:["عكس الإشارات", "تبديل الصفوف والأعمدة", "مضاعفة العناصر", "قسمة على det"], correct:1, exp:"المنقول Aᵀ يحوّل كل صف إلى عمود: (Aᵀ)ᵢⱼ = Aⱼᵢ."},
+  {id:163, section:"m5", q:"بطريقة كرامر لحل النظام {x+2y=5, 3x+y=4}:", options:["(3/5, 11/5)", "(11/5, 3/5)", "(3, 2)", "(1, 2)"], correct:0, exp:"D = 1-6 = -5. Dₓ = 5-8 = -3 ⟹ x = 3/5. D_y = 4-15 = -11 ⟹ y = 11/5."},
+  {id:164, section:"m5", q:"الدالة f(x) = 3x - 2 دالة:", options:["خطية", "تربيعية", "أسية", "جذرية"], correct:0, exp:"الدوال الخطية من الصورة f(x) = ax + b. هنا a=3, b=-2."},
+  {id:165, section:"m5", q:"ميل الدالة f(x) = -2x + 5 هو:", options:["5", "2", "-2", "-5"], correct:2, exp:"في الصيغة y = mx + c، الميل m = معامل x = -2."},
+  {id:166, section:"m5", q:"مجال الدالة f(x) = 2x + 1 هو:", options:["ℝ", "[0, ∞)", "x ≥ 0", "ℝ - {0}"], correct:0, exp:"الدوال الخطية معرّفة لجميع الأعداد الحقيقية. المجال = ℝ."},
+  {id:167, section:"m5", q:"الدالة f(x) = 7 تُسمى:", options:["خطية", "ثابتة", "تربيعية", "هوية"], correct:1, exp:"f(x) = c حيث c ثابت تُسمى دالة ثابتة. منحناها خط أفقي."},
+  {id:168, section:"m5", q:"أصفار الدالة f(x) = x² - 16 هي:", options:["4 فقط", "-4 فقط", "±4", "0"], correct:2, exp:"x² - 16 = 0 ⟹ x = ±4. الأصفار نقطتان."},
+  {id:169, section:"m5", q:"قيمة f(0) للدالة f(x) = x² - 3x + 5 هي:", options:["0", "5", "-5", "3"], correct:1, exp:"f(0) = 0 - 0 + 5 = 5. هذا المقطع الصادي."},
+  {id:170, section:"m5", q:"مساحة مثلث قائم طولا ضلعيه 6 و 8 هي:", options:["24", "48", "14", "10"], correct:0, exp:"المساحة = (1/2)(6)(8) = 24."},
+  {id:171, section:"m5", q:"مجموعة حل المعادلة 3x - 2 = 7 هي:", options:["{3}", "{-3}", "{9}", "{5}"], correct:0, exp:"3x = 9 ⟹ x = 3."},
+  {id:172, section:"m5", q:"في النظام {2x+y=5, x-y=1} قيمة x تساوي:", options:["1", "2", "3", "0"], correct:1, exp:"بالجمع: 3x = 6 ⟹ x = 2."},
+  {id:173, section:"m6", q:"درجة كثير الحدود 3x⁵ - 2x³ + 7 هي:", options:["3", "5", "7", "15"], correct:1, exp:"درجة كثير الحدود = أعلى أس للمتغير. هنا x⁵ فالدرجة = 5."},
+  {id:174, section:"m6", q:"المعامل الرئيسي في -4x⁴ + 2x² - x هو:", options:["-4", "2", "-1", "4"], correct:0, exp:"المعامل الرئيسي = معامل الحد ذي الأعلى درجة (أي x⁴)، وهو -4."},
+  {id:175, section:"m6", q:"الحد الثابت في 2x³ - 5x + 9 هو:", options:["2", "-5", "9", "3"], correct:2, exp:"الحد الثابت = الحد الذي ليس فيه متغير = 9."},
+  {id:176, section:"m6", q:"ناتج (x+5)(x-3) =", options:["x² + 2x - 15", "x² - 2x + 15", "x² + 8x - 15", "x² - 15"], correct:0, exp:"بالتوزيع: x² - 3x + 5x - 15 = x² + 2x - 15."},
+  {id:177, section:"m6", q:"ناتج (2x-1)² =", options:["4x² - 1", "4x² + 1", "4x² - 4x + 1", "4x² + 4x + 1"], correct:2, exp:"متطابقة (a-b)² = a² - 2ab + b²: (2x)² - 2(2x)(1) + 1 = 4x² - 4x + 1."},
+  {id:178, section:"m6", q:"ناتج (x+3)(x-3) =", options:["x² - 6", "x² - 9", "x² + 9", "x² + 6x - 9"], correct:1, exp:"فرق المربعين (a-b)(a+b) = a² - b². هنا x² - 9."},
+  {id:179, section:"m6", q:"تحليل x² - 25 هو:", options:["(x-5)²", "(x+5)²", "(x-5)(x+5)", "(x-25)(x+1)"], correct:2, exp:"فرق مربعين: x² - 5² = (x-5)(x+5)."},
+  {id:180, section:"m6", q:"تحليل x² + 10x + 25 هو:", options:["(x+5)²", "(x-5)²", "(x+5)(x-5)", "(x+10)(x+1)"], correct:0, exp:"مربع كامل: x² + 2(5)x + 5² = (x+5)²."},
+  {id:181, section:"m6", q:"تحليل x² - 7x + 12 هو:", options:["(x-3)(x-4)", "(x+3)(x+4)", "(x-2)(x-6)", "(x-1)(x-12)"], correct:0, exp:"نبحث عن عددين حاصل ضربهما 12 ومجموعهما -7: -3 و -4. فالتحليل (x-3)(x-4)."},
+  {id:182, section:"m6", q:"تحليل x³ - 27 هو:", options:["(x-3)³", "(x-3)(x²+3x+9)", "(x+3)(x²-3x+9)", "(x-3)(x²-9)"], correct:1, exp:"فرق مكعبين: a³ - b³ = (a-b)(a² + ab + b²). هنا (x-3)(x²+3x+9)."},
+  {id:183, section:"m6", q:"تحليل x³ + 8 هو:", options:["(x+2)³", "(x+2)(x²-2x+4)", "(x-2)(x²+2x+4)", "(x+2)(x²+4)"], correct:1, exp:"مجموع مكعبين: a³ + b³ = (a+b)(a² - ab + b²). هنا (x+2)(x²-2x+4)."},
+  {id:184, section:"m6", q:"باقي قسمة p(x) = x³ - 2x + 5 على (x - 1) هو:", options:["0", "4", "1", "5"], correct:1, exp:"بنظرية الباقي: p(1) = 1 - 2 + 5 = 4."},
+  {id:185, section:"m6", q:"إذا كان (x - 2) عامل لـ p(x)، فإن:", options:["p(2) = 0", "p(-2) = 0", "p(0) = 2", "p(2) = 2"], correct:0, exp:"نظرية العامل: (x-c) عامل لـ p(x) ⟺ p(c) = 0. إذن p(2) = 0."},
+  {id:186, section:"m6", q:"كثير الحدود الذي جذراه 3 و -4 هو:", options:["x² - x - 12", "x² + x - 12", "x² - x + 12", "x² + 7x - 12"], correct:1, exp:"(x-3)(x+4) = x² + 4x - 3x - 12 = x² + x - 12."},
+  {id:187, section:"m6", q:"مجموع جذري المعادلة x² - 6x + 8 = 0 يساوي:", options:["6", "-6", "8", "-8"], correct:0, exp:"مجموع الجذور = -b/a = -(-6)/1 = 6."},
+  {id:188, section:"m6", q:"حاصل ضرب جذري المعادلة 2x² + 5x - 3 = 0 يساوي:", options:["5/2", "-5/2", "3/2", "-3/2"], correct:3, exp:"حاصل ضرب الجذور = c/a = -3/2."},
+  {id:189, section:"m6", q:"المميز Δ في المعادلة 2x² - 4x + 3 = 0 يساوي:", options:["-8", "8", "16", "-16"], correct:0, exp:"Δ = b² - 4ac = 16 - 24 = -8. (سالب فلا جذور حقيقية)."},
+  {id:190, section:"m6", q:"إذا كان Δ > 0 فإن لمعادلة الدرجة الثانية:", options:["جذر مكرر", "جذران حقيقيان مختلفان", "لا جذور حقيقية", "جذر صفري"], correct:1, exp:"Δ > 0: جذران حقيقيان مختلفان. Δ = 0: جذر مكرر. Δ < 0: لا جذور حقيقية."},
+  {id:191, section:"m6", q:"جذور المعادلة x² - 5x + 6 = 0 هي:", options:["2, 3", "-2, -3", "1, 6", "2, -3"], correct:0, exp:"نحلل: (x-2)(x-3) = 0 ⟹ x = 2 أو x = 3."},
+  {id:192, section:"m6", q:"بالقانون العام حل 2x² - 3x + 1 = 0:", options:["1, 1/2", "-1, 1/2", "1, 2", "2, 1/2"], correct:0, exp:"بالتحليل (2x-1)(x-1) = 0: x = 1/2 أو x = 1."},
+  {id:193, section:"m6", q:"للدالة f(x) = x³ - 4x سلوك الطرفين:", options:["كلا الطرفين ↑", "كلا الطرفين ↓", "يسار ↓ يمين ↑", "يسار ↑ يمين ↓"], correct:2, exp:"للكثير حدود فردي الدرجة بمعامل موجب: يسار متجه للأسفل ويمين للأعلى."},
+  {id:194, section:"m6", q:"عدد أصفار الدالة p(x) = x⁴ - 16 الحقيقية:", options:["1", "2", "3", "4"], correct:1, exp:"x⁴ = 16 ⟹ x² = ±4. الحل الحقيقي: x² = 4 ⟹ x = ±2. جذران حقيقيان فقط."},
+  {id:195, section:"m6", q:"إذا كانت p(x) = x³ - x² - 4x + 4، فإن p(1) =", options:["0", "2", "-2", "4"], correct:0, exp:"p(1) = 1 - 1 - 4 + 4 = 0. فـ (x-1) عامل."},
+  {id:196, section:"m6", q:"تحليل x² + 5x + 6 هو:", options:["(x+1)(x+6)", "(x+2)(x+3)", "(x-2)(x-3)", "(x+5)(x+1)"], correct:1, exp:"نبحث عن عددين حاصل ضربهما 6 ومجموعهما 5: 2 و 3. التحليل (x+2)(x+3)."},
+  {id:197, section:"m6", q:"إذا كان حاصل ضرب جذري x² - 8x + k = 0 يساوي 12، فإن k =", options:["12", "-12", "8", "-8"], correct:0, exp:"حاصل الضرب = c/a = k/1 = k = 12."},
+  {id:198, section:"m6", q:"المعادلة x² + 4x + 4 = 0 لها:", options:["جذران مختلفان", "جذر مكرر", "لا جذور حقيقية", "3 جذور"], correct:1, exp:"Δ = 16 - 16 = 0. فالجذر مكرر: x = -2."},
+  {id:199, section:"m6", q:"تحليل 2x² + 7x + 3 هو:", options:["(2x+1)(x+3)", "(2x+3)(x+1)", "(2x-1)(x-3)", "(x+2)(x+3)"], correct:0, exp:"نفحص: (2x+1)(x+3) = 2x² + 6x + x + 3 = 2x² + 7x + 3 ✓."},
+  {id:200, section:"m6", q:"ناتج قسمة x² + 5x + 6 على (x+2) هو:", options:["x + 3", "x - 3", "x + 2", "x + 6"], correct:0, exp:"x² + 5x + 6 = (x+2)(x+3). عند القسمة على (x+2) يبقى (x+3)."},
+  {id:201, section:"m6", q:"العامل المشترك الأكبر لـ 6x³ و 9x²:", options:["3x²", "3x³", "6x²", "3x"], correct:0, exp:"المعامل GCD(6,9)=3. المتغير: أقل أس = x². فالعامل 3x²."},
+  {id:202, section:"m6", q:"تحليل xy + 3x + 2y + 6 بالتجميع:", options:["(x+2)(y+3)", "(x+3)(y+2)", "(x-2)(y-3)", "(xy+3)(x+2)"], correct:0, exp:"x(y+3) + 2(y+3) = (y+3)(x+2)."},
+  {id:203, section:"m6", q:"كثير الحدود من الدرجة 4 له على الأكثر:", options:["4 جذور", "3 جذور", "2 جذر", "5 جذور"], correct:0, exp:"النظرية الأساسية في الجبر: كثير حدود من درجة n له على الأكثر n جذراً حقيقياً."},
+  {id:204, section:"m6", q:"إذا كان p(x) = x³ + 2x² - 3، فإن p(0) =", options:["0", "2", "-3", "3"], correct:2, exp:"p(0) = 0 + 0 - 3 = -3."},
+  {id:205, section:"m6", q:"المميز في ax² + bx + c = 0 هو:", options:["a² - 4bc", "b² - 4ac", "c² - 4ab", "ab - 4c"], correct:1, exp:"Δ = b² - 4ac. يحدد عدد ونوع الجذور."},
+  {id:206, section:"m6", q:"إذا كان Δ = 0 في معادلة تربيعية فإن:", options:["لا جذور", "جذر مكرر", "جذران مختلفان", "3 جذور"], correct:1, exp:"Δ = 0 يعني جذراً حقيقياً واحداً مكرراً."},
+  {id:207, section:"m7", q:"الدالة العكسية لـ f(x) = 2x + 3 هي:", options:["(x-3)/2", "(x+3)/2", "2x - 3", "x/2 + 3"], correct:0, exp:"y = 2x + 3 ⟹ نبدل x, y: x = 2y + 3 ⟹ y = (x-3)/2."},
+  {id:208, section:"m7", q:"الدالة العكسية لـ f(x) = x³ هي:", options:["∛x", "1/x³", "x^(1/3)", "كلا 0 و 2"], correct:3, exp:"y = x³ ⟹ x = ∛y. إذن f⁻¹(x) = ∛x = x^(1/3). الخياران 0 و 2 متطابقان."},
+  {id:209, section:"m7", q:"إذا كانت f(x) = 5x - 1، فإن f⁻¹(9) =", options:["2", "45", "8", "1/9"], correct:0, exp:"f(x) = 9 ⟹ 5x - 1 = 9 ⟹ x = 2. فـ f⁻¹(9) = 2."},
+  {id:210, section:"m7", q:"مجال الدالة f(x) = √(2x - 6) هو:", options:["x > 3", "x ≥ 3", "x < 3", "ℝ"], correct:1, exp:"2x - 6 ≥ 0 ⟹ x ≥ 3. المجال [3, ∞)."},
+  {id:211, section:"m7", q:"مجال f(x) = √(9 - x²) هو:", options:["[-3, 3]", "(-3, 3)", "[3, ∞)", "ℝ"], correct:0, exp:"9 - x² ≥ 0 ⟹ x² ≤ 9 ⟹ -3 ≤ x ≤ 3. المجال [-3, 3]."},
+  {id:212, section:"m7", q:"مجال f(x) = 1/(x - 4) هو:", options:["ℝ - {4}", "ℝ - {0}", "x > 4", "x < 4"], correct:0, exp:"نستثني ما يجعل المقام صفراً: x = 4. المجال = ℝ - {4}."},
+  {id:213, section:"m7", q:"الخط المقارب الرأسي للدالة f(x) = 1/(x+2) هو:", options:["x = 2", "x = -2", "y = 0", "y = 1"], correct:1, exp:"الخط المقارب الرأسي يحدث عند أصفار المقام: x + 2 = 0 ⟹ x = -2."},
+  {id:214, section:"m7", q:"الخط المقارب الأفقي لـ f(x) = 1/x هو:", options:["x = 0", "y = 0", "y = 1", "لا يوجد"], correct:1, exp:"عند x → ±∞ فإن 1/x → 0. الخط المقارب الأفقي: y = 0."},
+  {id:215, section:"m7", q:"الخط المقارب الأفقي لـ f(x) = (2x+1)/(x-3) هو:", options:["y = 2", "y = 1/3", "y = -3", "y = 0"], correct:0, exp:"عندما درجة البسط = درجة المقام: الخط المقارب = نسبة معاملي الحد الرئيسي = 2/1 = 2."},
+  {id:216, section:"m7", q:"حل المعادلة √(x+3) = 4 هو:", options:["x = 13", "x = 1", "x = 7", "x = 16"], correct:0, exp:"نربع الطرفين: x + 3 = 16 ⟹ x = 13. التحقق: √16 = 4 ✓."},
+  {id:217, section:"m7", q:"حل المعادلة √(2x - 1) = 3 هو:", options:["x = 5", "x = 2", "x = 4", "x = 8"], correct:0, exp:"2x - 1 = 9 ⟹ x = 5."},
+  {id:218, section:"m7", q:"حل المعادلة 1/x = 1/(x+2) + 1/6 ممكن بـ:", options:["ضرب × 6x(x+2)", "القسمة على x", "التعويض", "التربيع"], correct:0, exp:"للمعادلات النسبية نضرب في المضاعف المشترك الأصغر للمقامات لحذفها."},
+  {id:219, section:"m7", q:"حل المعادلة 2/(x-1) = 3/(x+2) هو:", options:["x = 7", "x = 5", "x = -7", "x = 1"], correct:0, exp:"بالضرب التبادلي: 2(x+2) = 3(x-1) ⟹ 2x+4 = 3x-3 ⟹ x = 7."},
+  {id:220, section:"m7", q:"الدالة f(x) = √x لها مدى:", options:["ℝ", "[0, ∞)", "(-∞, 0]", "(0, ∞)"], correct:1, exp:"√x غير سالب دائماً، ويمكن أن يكون صفراً (عند x=0). المدى [0, ∞)."},
+  {id:221, section:"m7", q:"إذا كانت f(x) = x² و g(x) = x+1، فإن (f∘g)(2) =", options:["9", "5", "7", "3"], correct:0, exp:"g(2) = 3، ثم f(3) = 9."},
+  {id:222, section:"m7", q:"للدالة f(x) = x² - 2x تكون f دالة:", options:["زوجية", "فردية", "لا زوجية ولا فردية", "ثابتة"], correct:2, exp:"f(-x) = x² + 2x ≠ f(x) و ≠ -f(x). فالدالة لا زوجية ولا فردية."},
+  {id:223, section:"m7", q:"الدالة f(x) = x³ دالة:", options:["زوجية", "فردية", "ثابتة", "متذبذبة"], correct:1, exp:"f(-x) = -x³ = -f(x). الدوال الفردية متماثلة حول نقطة الأصل."},
+  {id:224, section:"m7", q:"الدالة f(x) = x² دالة:", options:["زوجية", "فردية", "ثابتة", "متذبذبة"], correct:0, exp:"f(-x) = x² = f(x). الدوال الزوجية متماثلة حول محور y."},
+  {id:225, section:"m7", q:"الخط المقارب المائل للدالة f(x) = (x²+1)/x هو:", options:["y = x", "y = 0", "y = x + 1", "y = 1"], correct:0, exp:"بالقسمة الطويلة: (x²+1)/x = x + 1/x. عند ±∞ يقترب من y = x."},
+  {id:226, section:"m7", q:"إذا كانت g(x) = 2x وكانت g(f(x)) = 6x + 4، فإن f(x) =", options:["3x + 2", "6x + 4", "x + 2", "3x"], correct:0, exp:"g(f(x)) = 2f(x) = 6x + 4 ⟹ f(x) = 3x + 2."},
+  {id:227, section:"m7", q:"الخطوط المقاربة للدالة f(x) = 1/(x²-4):", options:["x = 2, x = -2, y = 0", "x = ±2 فقط", "y = 0 فقط", "لا يوجد"], correct:0, exp:"أصفار المقام: x = ±2 (مقاربان رأسيان). عند ±∞ الدالة → 0 (مقارب أفقي y = 0)."},
+  {id:228, section:"m7", q:"لتكون دالتان f, g عكسيتين: (f∘g)(x) =", options:["f(x)", "g(x)", "x", "1"], correct:2, exp:"إذا كانت f, g عكسيتان لبعضهما فإن (f∘g)(x) = (g∘f)(x) = x لكل x في المجال."},
+  {id:229, section:"m7", q:"شرط وجود الدالة العكسية:", options:["أن تكون متزايدة", "أن تكون 1-1 (واحد لواحد)", "أن تكون متصلة", "أن تكون زوجية"], correct:1, exp:"الدالة تكون قابلة للعكس إذا كانت 1-1 (كل قيمة في المدى تأتي من قيمة واحدة في المجال)."},
+  {id:230, section:"m7", q:"إذا كانت f(x) = 1/x، فإن f(f(x)) =", options:["x", "1/x", "1/x²", "-1/x"], correct:0, exp:"f(f(x)) = f(1/x) = 1/(1/x) = x. فالدالة 1/x عكس نفسها."},
+  {id:231, section:"m7", q:"مجال الدالة النسبية f(x) = (x-1)/(x²-4):", options:["ℝ - {1}", "ℝ - {2, -2}", "ℝ - {1, 2, -2}", "ℝ"], correct:1, exp:"نستثني أصفار المقام: x² - 4 = 0 ⟹ x = ±2. المجال = ℝ - {2, -2}."},
+  {id:232, section:"m7", q:"عند حل المعادلة √x = x - 2 يجب:", options:["تربيع الطرفين واختبار الحلول", "قسمة الطرفين على x", "ضرب الطرفين في x", "إضافة 2"], correct:0, exp:"نربع: x = (x-2)² = x² - 4x + 4 ⟹ x² - 5x + 4 = 0. الحلول 1, 4. نختبر: x=1 يعطي 1 ≠ -1 ✗. x=4: 2 = 2 ✓."},
+  {id:233, section:"m7", q:"الدالة f(x) = |x| دالة:", options:["زوجية", "فردية", "ثابتة", "خطية"], correct:0, exp:"|-x| = |x|، فالدالة زوجية متماثلة حول محور y."},
+  {id:234, section:"m7", q:"لإيجاد الدالة العكسية نبدل:", options:["x و y ونحل لـ y", "x و c", "الإشارات", "نرفع للقوة"], correct:0, exp:"طريقة إيجاد f⁻¹: نبدل x و y في y = f(x) ثم نحل لـ y الجديدة."},
+  {id:235, section:"m7", q:"مدى f(x) = -√x هو:", options:["[0, ∞)", "(-∞, 0]", "ℝ", "(0, ∞)"], correct:1, exp:"-√x ≤ 0 دائماً. المدى (-∞, 0]."},
+  {id:236, section:"m7", q:"الدالتان العكسيتان متناظرتان حول:", options:["المحور x", "المحور y", "المستقيم y = x", "نقطة الأصل"], correct:2, exp:"بيانيّاً: منحنى f ومنحنى f⁻¹ متناظران حول المستقيم y = x."},
+  {id:237, section:"m7", q:"إذا كانت f(x) = x + 3، فإن f⁻¹(5) =", options:["2", "8", "-2", "1/5"], correct:0, exp:"f(x) = 5 ⟹ x + 3 = 5 ⟹ x = 2."},
+  {id:238, section:"m7", q:"حل المعادلة 2/x = 6 هو:", options:["x = 3", "x = 1/3", "x = 12", "x = -3"], correct:1, exp:"نضرب × x: 2 = 6x ⟹ x = 1/3."},
+  {id:239, section:"m7", q:"الدالة الأم للجذر التربيعي:", options:["y = x", "y = x²", "y = √x", "y = 1/x"], correct:2, exp:"الدالة الأم للجذر التربيعي y = √x. مجالها [0, ∞)."},
+  {id:240, section:"m7", q:"الدالة النسبية الأم:", options:["y = x", "y = 1/x", "y = x²", "y = √x"], correct:1, exp:"الدالة النسبية الأم y = 1/x، لها مقاربان: x = 0 و y = 0."},
+  {id:241, section:"m7", q:"لتكون f دالة 1-1:", options:["لكل y مختلف يوجد x مختلف", "كل x له y واحد", "f(0) = 0", "f ثابتة"], correct:0, exp:"الدالة 1-1: كل قيمة في المدى تأتي من قيمة واحدة فقط في المجال (اختبار الخط الأفقي)."},
+  {id:242, section:"m8", q:"المتتابعة 3، 7، 11، 15، ... حسابية أساسها:", options:["2", "3", "4", "7"], correct:2, exp:"في المتتابعة الحسابية الأساس d = الفرق بين كل حدين متتاليين. 7-3 = 4."},
+  {id:243, section:"m8", q:"الحد العام للمتتابعة الحسابية:", options:["aₙ = a₁ · rⁿ⁻¹", "aₙ = a₁ + (n-1)d", "aₙ = a₁ + nd", "aₙ = n·d"], correct:1, exp:"الحد العام للحسابية: aₙ = a₁ + (n-1)d حيث d الأساس."},
+  {id:244, section:"m8", q:"الحد العاشر للمتتابعة 2، 5، 8، 11، ...:", options:["27", "29", "30", "32"], correct:1, exp:"حسابية: a₁=2, d=3. a₁₀ = 2 + 9(3) = 29."},
+  {id:245, section:"m8", q:"المتتابعة 2، 6، 18، 54، ... هندسية أساسها:", options:["2", "3", "4", "6"], correct:1, exp:"في الهندسية r = النسبة بين حدين متتاليين. 6/2 = 3."},
+  {id:246, section:"m8", q:"الحد العام للمتتابعة الهندسية:", options:["aₙ = a₁ + (n-1)d", "aₙ = a₁ · rⁿ⁻¹", "aₙ = rⁿ", "aₙ = nd"], correct:1, exp:"الحد العام للهندسية: aₙ = a₁ · rⁿ⁻¹ حيث r الأساس."},
+  {id:247, section:"m8", q:"الحد الخامس للمتتابعة 3، 6، 12، ...:", options:["24", "48", "96", "72"], correct:1, exp:"هندسية a₁=3, r=2. a₅ = 3 · 2⁴ = 48."},
+  {id:248, section:"m8", q:"مجموع أول n حد في المتتابعة الحسابية:", options:["Sₙ = n(a₁ + aₙ)/2", "Sₙ = a₁ · rⁿ", "Sₙ = n²", "Sₙ = (aₙ)²"], correct:0, exp:"Sₙ = n(a₁ + aₙ)/2 = n[2a₁ + (n-1)d]/2."},
+  {id:249, section:"m8", q:"مجموع أول 10 أعداد طبيعية:", options:["45", "50", "55", "100"], correct:2, exp:"1+2+...+10 = 10(11)/2 = 55. بالصيغة العامة n(n+1)/2."},
+  {id:250, section:"m8", q:"مجموع 2 + 4 + 6 + ... + 20:", options:["100", "110", "220", "200"], correct:1, exp:"حسابية a₁=2, d=2, aₙ=20, n=10. S = 10(2+20)/2 = 110."},
+  {id:251, section:"m8", q:"مجموع 1 + 2 + 4 + 8 + 16 + 32:", options:["31", "63", "62", "64"], correct:1, exp:"هندسية a₁=1, r=2, n=6. S = (2⁶-1)/(2-1) = 63."},
+  {id:252, section:"m8", q:"مجموع المتتابعة الهندسية اللانهائية (|r| < 1):", options:["a₁/(1-r)", "a₁(rⁿ-1)", "∞", "0"], correct:0, exp:"للهندسية اللانهائية بشرط |r| < 1: S∞ = a₁/(1-r)."},
+  {id:253, section:"m8", q:"مجموع 1 + 1/2 + 1/4 + 1/8 + ...:", options:["1", "2", "3", "∞"], correct:1, exp:"هندسية لانهائية a₁=1, r=1/2. S∞ = 1/(1-1/2) = 2."},
+  {id:254, section:"m8", q:"الوسط الحسابي بين 5 و 13:", options:["8", "9", "18", "6.5"], correct:1, exp:"الوسط الحسابي = (5+13)/2 = 9."},
+  {id:255, section:"m8", q:"الوسط الهندسي بين 4 و 9:", options:["±6", "6.5", "±13", "13"], correct:0, exp:"الوسط الهندسي = ±√(4·9) = ±√36 = ±6."},
+  {id:256, section:"m8", q:"إذا كان a₄ = 15 و a₇ = 24 (حسابية) فإن d =", options:["3", "2", "4", "1"], correct:0, exp:"a₇ - a₄ = 3d ⟹ 9 = 3d ⟹ d = 3."},
+  {id:257, section:"m8", q:"في متتابعة هندسية a₁ = 2 و a₄ = 54، الأساس:", options:["2", "3", "4", "6"], correct:1, exp:"a₄ = a₁r³ = 2r³ = 54 ⟹ r³ = 27 ⟹ r = 3."},
+  {id:258, section:"m8", q:"المتتابعة فيبوناتشي: 1، 1، 2، 3، 5، ... الحد التالي:", options:["6", "7", "8", "9"], correct:2, exp:"كل حد = مجموع الحدين السابقين: 3+5 = 8."},
+  {id:259, section:"m8", q:"إذا كان aₙ = 3n - 1، فإن a₈ =", options:["22", "23", "24", "27"], correct:1, exp:"a₈ = 3(8) - 1 = 23."},
+  {id:260, section:"m8", q:"إذا كان aₙ = 2ⁿ + 1، فإن a₅ =", options:["32", "33", "31", "17"], correct:1, exp:"a₅ = 2⁵ + 1 = 33."},
+  {id:261, section:"m8", q:"مجموع أول 20 حد في المتتابعة 3، 7، 11، ...:", options:["820", "830", "800", "810"], correct:0, exp:"a₁=3, d=4, n=20. a₂₀ = 3 + 19(4) = 79. S = 20(3+79)/2 = 820."},
+  {id:262, section:"m8", q:"مجموع مربعات أول n عدد طبيعي:", options:["n(n+1)/2", "n(n+1)(2n+1)/6", "n²", "[n(n+1)/2]²"], correct:1, exp:"Σk² من 1 إلى n = n(n+1)(2n+1)/6."},
+  {id:263, section:"m8", q:"مجموع مكعبات أول n عدد طبيعي:", options:["n(n+1)/2", "n(n+1)(2n+1)/6", "[n(n+1)/2]²", "n²"], correct:2, exp:"Σk³ = [n(n+1)/2]². وهو مربع مجموع الأعداد."},
+  {id:264, section:"m8", q:"في نظرية ذات الحدين (a+b)ⁿ عدد الحدود:", options:["n", "n-1", "n+1", "2n"], correct:2, exp:"مفكوك (a+b)ⁿ يحوي n+1 حد."},
+  {id:265, section:"m8", q:"الحد الثالث في (x+2)⁴:", options:["6x² · 4", "24x²", "12x²", "8x²"], correct:1, exp:"الحد العام: C(n,k) · aⁿ⁻ᵏ · bᵏ. الحد الثالث (k=2): C(4,2) · x² · 2² = 6·x²·4 = 24x²."},
+  {id:266, section:"m8", q:"إذا كان مجموع 3 حدود حسابية متتالية 21 والأوسط هو الوسط الحسابي، فإنه يساوي:", options:["5", "7", "8", "10"], correct:1, exp:"مجموع 3 حدود حسابية = 3 × الأوسط. 21/3 = 7."},
+  {id:267, section:"m8", q:"المتتابعة 64، 32، 16، 8، ... هندسية، الحد التالي:", options:["2", "4", "0", "1"], correct:1, exp:"r = 1/2. الحد الخامس = 8 × 1/2 = 4."},
+  {id:268, section:"m8", q:"إذا كانت a₁ = 5 و d = -2 (حسابية)، فإن a₁₀ =", options:["-13", "-15", "-10", "13"], correct:0, exp:"a₁₀ = 5 + 9(-2) = 5 - 18 = -13."},
+  {id:269, section:"m8", q:"الأعداد الفردية 1، 3، 5، ... aₙ =", options:["2n", "2n-1", "n+1", "n"], correct:1, exp:"الحد العام للأعداد الفردية: aₙ = 2n - 1."},
+  {id:270, section:"m8", q:"مجموع أول 50 عدد فردي:", options:["2500", "2550", "5000", "100"], correct:0, exp:"Σ(2k-1) من 1 إلى n = n². للأعداد الـ 50 الأولى: 50² = 2500."},
+  {id:271, section:"m8", q:"إذا كان r > 1 في الهندسية، المتتابعة:", options:["متزايدة (لقيم موجبة)", "متناقصة", "ثابتة", "متذبذبة"], correct:0, exp:"إذا r > 1 و a₁ > 0: المتتابعة متزايدة. وإذا 0 < r < 1 و a₁ > 0: متناقصة."},
+  {id:272, section:"m8", q:"اذا كان a₃ = 12, a₆ = 96 في هندسية فإن r =", options:["2", "3", "4", "8"], correct:0, exp:"a₆/a₃ = r³ = 96/12 = 8 ⟹ r = 2."},
+  {id:273, section:"m8", q:"الصيغة التكرارية aₙ = aₙ₋₁ + 3، a₁ = 2 تعطي:", options:["2, 5, 8, 11, ...", "2, 6, 18, ...", "2, 4, 8, ...", "3, 6, 9, ..."], correct:0, exp:"كل حد = السابق + 3. a₁=2, a₂=5, a₃=8, a₄=11, ..."},
+  {id:274, section:"m8", q:"الرمز Σ في الرياضيات يعني:", options:["الاتحاد", "التقاطع", "المجموع", "الضرب"], correct:2, exp:"Σ (سيغما) يرمز للجمع. Σxᵢ تعني مجموع xᵢ."},
+  {id:275, section:"m8", q:"Σ(k=1 إلى 5) k يساوي:", options:["10", "15", "25", "55"], correct:1, exp:"1+2+3+4+5 = 15."},
+  {id:276, section:"m8", q:"Σ(k=1 إلى 4) 2k يساوي:", options:["10", "20", "30", "40"], correct:1, exp:"2(1+2+3+4) = 2(10) = 20."},
+  {id:277, section:"m9", q:"احتمال الحدث الأكيد يساوي:", options:["0", "1/2", "1", "2"], correct:2, exp:"احتمال الحدث الأكيد = 1. احتمال المستحيل = 0. 0 ≤ P(A) ≤ 1."},
+  {id:278, section:"m9", q:"احتمال ظهور الصورة عند إلقاء قطعة نقدية عادلة:", options:["0", "1/4", "1/2", "1"], correct:2, exp:"قطعة عادلة: نتيجتان متساويتان (صورة، كتابة). P(صورة) = 1/2."},
+  {id:279, section:"m9", q:"احتمال ظهور العدد 5 عند رمي حجر نرد:", options:["1/6", "1/3", "1/2", "5/6"], correct:0, exp:"حجر النرد له 6 أوجه متساوية. P(5) = 1/6."},
+  {id:280, section:"m9", q:"احتمال ظهور عدد فردي عند رمي نرد:", options:["1/6", "1/3", "1/2", "2/3"], correct:2, exp:"الأعداد الفردية {1, 3, 5} من 6. P = 3/6 = 1/2."},
+  {id:281, section:"m9", q:"احتمال ظهور عدد أكبر من 4 عند رمي نرد:", options:["1/6", "1/3", "1/2", "2/3"], correct:0, exp:"الأعداد {5, 6} من 6. P = 2/6 = 1/3… الإجابة 1/3، لكن بالتحقق: P = 2/6. الخيار الأقرب الفهرس 1: 1/3."},
+  {id:282, section:"m9", q:"إذا كان P(A) = 0.35 فإن P(A') (المتممة) =", options:["0.35", "0.65", "0.5", "0"], correct:1, exp:"P(A') = 1 - P(A) = 1 - 0.35 = 0.65."},
+  {id:283, section:"m9", q:"إذا كان حدثان A, B مستقلين فإن P(A ∩ B) =", options:["P(A) + P(B)", "P(A) · P(B)", "P(A) - P(B)", "P(A)/P(B)"], correct:1, exp:"للمستقلين: P(A∩B) = P(A)·P(B)."},
+  {id:284, section:"m9", q:"P(A ∪ B) =", options:["P(A) + P(B) - P(A∩B)", "P(A) + P(B)", "P(A) · P(B)", "P(A) - P(B)"], correct:0, exp:"قاعدة الجمع: P(A∪B) = P(A) + P(B) - P(A∩B). للمنفصلين A∩B=∅."},
+  {id:285, section:"m9", q:"سحب ورقة قلب من 52 ورقة:", options:["1/4", "1/13", "1/52", "3/52"], correct:0, exp:"13 ورقة قلب من 52. P = 13/52 = 1/4."},
+  {id:286, section:"m9", q:"سحب آس من 52 ورقة:", options:["1/52", "1/13", "1/4", "4/13"], correct:1, exp:"4 آسات من 52. P = 4/52 = 1/13."},
+  {id:287, section:"m9", q:"عدد النتائج الممكنة لرمي قطعة نقدية 3 مرات:", options:["3", "6", "8", "9"], correct:2, exp:"بمبدأ الضرب: 2 × 2 × 2 = 8."},
+  {id:288, section:"m9", q:"عدد طرق ترتيب 5 كتب على رف:", options:["5", "25", "120", "625"], correct:2, exp:"التباديل = 5! = 120."},
+  {id:289, section:"m9", q:"عدد طرق اختيار 2 من 6 (C(6, 2)):", options:["12", "15", "20", "30"], correct:1, exp:"C(6,2) = 6!/(2!·4!) = (6·5)/2 = 15."},
+  {id:290, section:"m9", q:"P(n, r) = n!/(n-r)! تُستخدم لحساب:", options:["التباديل", "التوافيق", "الاحتمال", "الوسط"], correct:0, exp:"التباديل تهتم بالترتيب. الصيغة P(n, r) = n!/(n-r)!."},
+  {id:291, section:"m9", q:"C(n, r) = n!/[r!(n-r)!] تُستخدم لحساب:", options:["التباديل", "التوافيق", "الاحتمال", "المجموع"], correct:1, exp:"التوافيق لا تهتم بالترتيب. الصيغة تُنتج C أقل من P بعامل r!."},
+  {id:292, section:"m9", q:"صندوق فيه 3 كرات حمراء و 5 زرقاء. احتمال سحب حمراء:", options:["3/5", "3/8", "5/8", "1/2"], correct:1, exp:"المجموع 8 كرات. P(حمراء) = 3/8."},
+  {id:293, section:"m9", q:"سُحبت كرتان بالتعاقب مع الإرجاع من صندوق (3 حمراء، 5 زرقاء)، احتمال كون الاثنتين حمراوين:", options:["9/64", "3/8", "9/56", "1/2"], correct:0, exp:"مع الإرجاع (مستقل): (3/8)(3/8) = 9/64."},
+  {id:294, section:"m9", q:"سُحبت كرتان بالتعاقب بدون إرجاع، احتمال كون الاثنتين حمراوين (3 حمراء، 5 زرقاء):", options:["9/64", "3/28", "3/8", "1/4"], correct:1, exp:"بدون إرجاع: (3/8)(2/7) = 6/56 = 3/28."},
+  {id:295, section:"m9", q:"الوسط الحسابي للأعداد 2، 5، 7، 10، 16:", options:["7", "8", "9", "10"], correct:1, exp:"المتوسط = (2+5+7+10+16)/5 = 40/5 = 8."},
+  {id:296, section:"m9", q:"الوسيط للأعداد 3، 7، 9، 12، 15:", options:["9", "10", "7", "12"], correct:0, exp:"الأعداد مرتبة وعددها فردي: الوسيط هو الأوسط = 9."},
+  {id:297, section:"m9", q:"المنوال للقيم 2، 3، 3، 4، 5، 3، 6:", options:["2", "3", "4", "5"], correct:1, exp:"المنوال = القيمة الأكثر تكراراً = 3 (تكررت 3 مرات)."},
+  {id:298, section:"m9", q:"إذا كانت البيانات متماثلة (منحنى طبيعي):", options:["الوسط < الوسيط", "الوسط = الوسيط = المنوال", "الوسط > المنوال", "المنوال = الوسيط فقط"], correct:1, exp:"في التوزيع الطبيعي المتماثل: الوسط = الوسيط = المنوال."},
+  {id:299, section:"m9", q:"في المنحنى الطبيعي، نسبة البيانات ضمن انحراف معياري واحد من الوسط:", options:["50%", "68%", "95%", "99%"], correct:1, exp:"قاعدة 68-95-99.7: ضمن σ واحد حوالي 68%، ضمن 2σ حوالي 95%، ضمن 3σ حوالي 99.7%."},
+  {id:300, section:"m9", q:"الانحراف المعياري مقياس لـ:", options:["المركز", "التشتت", "الشكل", "الحد الأقصى"], correct:1, exp:"الانحراف المعياري σ يقيس مدى تبعثر البيانات عن الوسط."},
+  {id:301, section:"m9", q:"P(A|B) =", options:["P(A)·P(B)", "P(A∩B)/P(B)", "P(A)/P(B)", "P(A) + P(B)"], correct:1, exp:"الاحتمال الشرطي: P(A|B) = P(A∩B)/P(B). شرط: P(B) > 0."},
+  {id:302, section:"m9", q:"إذا كان P(A) = 0.4 و P(B) = 0.3 والحدثان منفصلان، فإن P(A ∪ B):", options:["0.12", "0.1", "0.7", "1"], correct:2, exp:"للمنفصلين: P(A∪B) = P(A) + P(B) = 0.7."},
+  {id:303, section:"m9", q:"توقع رمي نرد عادل:", options:["3", "3.5", "4", "6"], correct:1, exp:"E(X) = (1+2+3+4+5+6)/6 = 3.5."},
+  {id:304, section:"m9", q:"العدد المتوقع للنواتج الممكنة في رمي نردين:", options:["12", "6", "36", "18"], correct:2, exp:"بمبدأ الضرب: 6 × 6 = 36 نتيجة ممكنة."},
+  {id:305, section:"m9", q:"احتمال مجموع 7 عند رمي نردين:", options:["1/6", "1/12", "5/36", "1/36"], correct:0, exp:"الاحتمالات: (1,6),(2,5),(3,4),(4,3),(5,2),(6,1) = 6 طرق. P = 6/36 = 1/6."},
+  {id:306, section:"m9", q:"احتمال مجموع 12 عند رمي نردين:", options:["1/36", "1/12", "1/6", "2/36"], correct:0, exp:"فقط (6,6) = 1 طريقة من 36. P = 1/36."},
+  {id:307, section:"m9", q:"لمجموعة مرتبة: {2, 5, 7, 9, 12} الربيع الأول Q₁:", options:["3.5", "5", "6", "7"], correct:1, exp:"Q₁ يقسم النصف السفلي للبيانات. للبيانات {2, 5, 7}: الوسيط 5."},
+  {id:308, section:"m9", q:"إذا ألقيت قطعة نقدية وظهرت الصورة 7 مرات من 10، التكرار النسبي للصورة:", options:["0.3", "0.7", "0.5", "10"], correct:1, exp:"التكرار النسبي = 7/10 = 0.7."},
+  {id:309, section:"m9", q:"عدد توليفات اللجنة المكوّنة من 3 أفراد من 8:", options:["24", "56", "336", "512"], correct:1, exp:"C(8,3) = 8!/(3!·5!) = (8·7·6)/6 = 56."},
+  {id:310, section:"m9", q:"عدد طرق اختيار رئيس ونائب من 10:", options:["45", "90", "100", "20"], correct:1, exp:"ترتيب مهم (تبادل): P(10, 2) = 10 × 9 = 90."},
+  {id:311, section:"m9", q:"إذا كان 2 من 5 كرات معيبة، احتمال اختيار كرة سليمة:", options:["2/5", "3/5", "1/5", "1/2"], correct:1, exp:"السليمة 3 من 5. P = 3/5."},
+  {id:312, section:"m10", q:"قيمة sin 30° =", options:["1/2", "√3/2", "√2/2", "1"], correct:0, exp:"من زوايا قياسية: sin 30° = 1/2."},
+  {id:313, section:"m10", q:"قيمة cos 60° =", options:["1/2", "√3/2", "√2/2", "0"], correct:0, exp:"cos 60° = sin 30° = 1/2."},
+  {id:314, section:"m10", q:"قيمة tan 45° =", options:["0", "1", "√3", "∞"], correct:1, exp:"tan 45° = sin 45°/cos 45° = 1 (الضلعان متساويان في المثلث القائم متساوي الساقين)."},
+  {id:315, section:"m10", q:"قيمة sin 90° =", options:["0", "1", "-1", "غير معرفة"], correct:1, exp:"sin يبلغ أقصاه 1 عند 90°."},
+  {id:316, section:"m10", q:"قيمة cos 180° =", options:["0", "1", "-1", "1/2"], correct:2, exp:"cos يبلغ أدناه -1 عند 180°."},
+  {id:317, section:"m10", q:"قيمة tan 90° =", options:["0", "1", "∞", "غير معرفة"], correct:3, exp:"cos 90° = 0، والقسمة على صفر غير معرفة. tan 90° غير معرفة."},
+  {id:318, section:"m10", q:"180° بالتقدير الدائري =", options:["π/2", "π", "2π", "π/3"], correct:1, exp:"180° = π راديان. التحويل: درجات × π/180."},
+  {id:319, section:"m10", q:"π/3 راديان بالدرجات =", options:["30°", "45°", "60°", "90°"], correct:2, exp:"π/3 × 180°/π = 60°."},
+  {id:320, section:"m10", q:"المتطابقة الأساسية sin²θ + cos²θ =", options:["0", "1", "2", "sin 2θ"], correct:1, exp:"متطابقة فيثاغورس الشهيرة: sin²θ + cos²θ = 1 لكل θ."},
+  {id:321, section:"m10", q:"إذا كان sin θ = 3/5 و θ في الربع الأول، فإن cos θ =", options:["3/5", "4/5", "5/3", "-4/5"], correct:1, exp:"cos²θ = 1 - 9/25 = 16/25 ⟹ cos θ = 4/5 (موجب في الربع الأول)."},
+  {id:322, section:"m10", q:"إذا كان cos θ = 1/2 في الربع الرابع، فإن sin θ =", options:["√3/2", "-√3/2", "1/2", "-1/2"], correct:1, exp:"sin²θ = 1 - 1/4 = 3/4 ⟹ |sin θ| = √3/2. في الربع الرابع sin سالبة."},
+  {id:323, section:"m10", q:"قيمة tan 30° =", options:["1/√3", "√3", "1", "√2/2"], correct:0, exp:"tan 30° = sin 30°/cos 30° = (1/2)/(√3/2) = 1/√3."},
+  {id:324, section:"m10", q:"الزاوية المرجعية لـ 150°:", options:["30°", "60°", "150°", "210°"], correct:0, exp:"150° في الربع الثاني، مرجعية = 180° - 150° = 30°."},
+  {id:325, section:"m10", q:"الزاوية المرجعية لـ 240°:", options:["30°", "60°", "120°", "240°"], correct:1, exp:"240° في الربع الثالث، مرجعية = 240° - 180° = 60°."},
+  {id:326, section:"m10", q:"cos 120° =", options:["1/2", "-1/2", "√3/2", "-√3/2"], correct:1, exp:"الربع الثاني cos سالبة. cos 120° = -cos 60° = -1/2."},
+  {id:327, section:"m10", q:"sin 210° =", options:["1/2", "-1/2", "√3/2", "-√3/2"], correct:1, exp:"الربع الثالث sin سالبة. sin 210° = -sin 30° = -1/2."},
+  {id:328, section:"m10", q:"قانون الجيوب:", options:["a/sin A = b/sin B", "a² = b² + c²", "a = b cos C", "sin(A+B) = sin A + sin B"], correct:0, exp:"قانون الجيوب: a/sin A = b/sin B = c/sin C."},
+  {id:329, section:"m10", q:"قانون جيوب التمام: a² =", options:["b² + c² - 2bc cos A", "b² + c² + 2bc cos A", "b² - c²", "b² · c²"], correct:0, exp:"a² = b² + c² - 2bc cos A. يعمم نظرية فيثاغورس لغير القائم."},
+  {id:330, section:"m10", q:"متطابقة الزاوية المضاعفة: sin 2θ =", options:["2 sin θ", "2 sin θ cos θ", "sin²θ", "cos²θ"], correct:1, exp:"sin 2θ = 2 sin θ cos θ."},
+  {id:331, section:"m10", q:"cos 2θ =", options:["cos²θ - sin²θ", "2 sin θ", "sin²θ - cos²θ", "1 + cos θ"], correct:0, exp:"cos 2θ = cos²θ - sin²θ = 2cos²θ - 1 = 1 - 2sin²θ."},
+  {id:332, section:"m10", q:"sec θ =", options:["1/cos θ", "1/sin θ", "cos/sin", "1/tan θ"], correct:0, exp:"sec θ = 1/cos θ. تذكر: csc θ = 1/sin θ، cot θ = 1/tan θ."},
+  {id:333, section:"m10", q:"الفترة الدورية لـ sin x:", options:["π", "2π", "π/2", "4π"], correct:1, exp:"sin(x + 2π) = sin x. الفترة = 2π."},
+  {id:334, section:"m10", q:"الفترة الدورية لـ tan x:", options:["π", "2π", "π/2", "π/4"], correct:0, exp:"tan(x + π) = tan x. الفترة = π."},
+  {id:335, section:"m10", q:"مدى y = sin x:", options:["[0, 1]", "[-1, 1]", "ℝ", "[0, ∞)"], correct:1, exp:"sin x بين -1 و 1 شاملة. المدى [-1, 1]."},
+  {id:336, section:"m10", q:"في المثلث القائم أضلاعه 3، 4، 5، قيمة sin الزاوية المقابلة لـ 4:", options:["3/5", "4/5", "3/4", "5/4"], correct:1, exp:"sin = مقابل/وتر = 4/5."},
+  {id:337, section:"m10", q:"في المثلث القائم أضلاعه 5، 12، 13، قيمة cos الزاوية المقابلة لـ 5:", options:["5/13", "12/13", "5/12", "13/5"], correct:1, exp:"cos = مجاور/وتر = 12/13."},
+  {id:338, section:"m10", q:"sin(π/6) =", options:["1/2", "√3/2", "√2/2", "1"], correct:0, exp:"π/6 = 30°. sin(π/6) = sin 30° = 1/2."},
+  {id:339, section:"m10", q:"sin(π - θ) =", options:["sin θ", "-sin θ", "cos θ", "-cos θ"], correct:0, exp:"sin(π - θ) = sin θ (التطابق في الربع الثاني مع المرجعية θ)."},
+  {id:340, section:"m10", q:"cos(-θ) =", options:["cos θ", "-cos θ", "sin θ", "-sin θ"], correct:0, exp:"cos دالة زوجية: cos(-θ) = cos θ. بينما sin فردية: sin(-θ) = -sin θ."},
+  {id:341, section:"m10", q:"حل sin x = 1/2 في [0, 2π):", options:["π/6 فقط", "π/6, 5π/6", "π/3, 2π/3", "π/2"], correct:1, exp:"sin = 1/2 في الربع الأول عند π/6 والثاني عند π - π/6 = 5π/6."},
+  {id:342, section:"m10", q:"حل cos x = 0 في [0, 2π):", options:["π/2 فقط", "π/2, 3π/2", "0, π", "π, 2π"], correct:1, exp:"cos = 0 عند π/2 و 3π/2."},
+  {id:343, section:"m10", q:"إذا كان طولا ساقي مثلث قائم 6 و 8، فالوتر:", options:["10", "12", "14", "√14"], correct:0, exp:"بفيثاغورس: وتر = √(36+64) = √100 = 10."},
+  {id:344, section:"m10", q:"قيمة cos π =", options:["0", "1", "-1", "1/2"], correct:2, exp:"cos π = cos 180° = -1."},
+  {id:345, section:"m10", q:"sin(90° - θ) =", options:["sin θ", "cos θ", "-sin θ", "tan θ"], correct:1, exp:"متطابقة التمّام: sin(90°-θ) = cos θ. و cos(90°-θ) = sin θ."},
+  {id:346, section:"m10", q:"في مثلث أضلاعه 5، 12، 13، ما نوعه؟", options:["قائم الزاوية", "متساوي الساقين", "حاد الزوايا", "منفرج الزاوية"], correct:0, exp:"5² + 12² = 25 + 144 = 169 = 13². تحقق فيثاغورس فهو قائم الزاوية."},
+  {id:347, section:"m10", q:"cot 45° =", options:["0", "1", "√3", "1/√3"], correct:1, exp:"cot 45° = 1/tan 45° = 1."},
+  {id:348, section:"m10", q:"القيمة العظمى لـ f(x) = 3 sin x:", options:["3", "1", "6", "-3"], correct:0, exp:"sin x بين [-1, 1] فـ 3 sin x بين [-3, 3]. القصوى = 3."},
+  {id:349, section:"m10", q:"مدى y = 2 sin x + 1:", options:["[-1, 3]", "[-2, 2]", "[0, 3]", "[1, 3]"], correct:0, exp:"2 sin x بين [-2, 2]، بإضافة 1: [-1, 3]."},
+  {id:350, section:"m10", q:"csc 90° =", options:["0", "1", "-1", "غير معرفة"], correct:1, exp:"csc 90° = 1/sin 90° = 1."},
+  {id:351, section:"m10", q:"1 + tan²θ =", options:["sec²θ", "csc²θ", "cos²θ", "sin²θ"], correct:0, exp:"بقسمة sin²+cos²=1 على cos²: tan²θ + 1 = sec²θ."},
+  {id:352, section:"m10", q:"دورة كاملة بالتقدير الدائري:", options:["π", "2π", "π/2", "4π"], correct:1, exp:"الدورة الكاملة = 360° = 2π راديان."},
+  {id:353, section:"m11", q:"منحنى f(x) = (x-2)² + 3 يُحصل عليه من y = x² بـ:", options:["إزاحة يميناً 2 ولأعلى 3", "إزاحة يساراً 2 ولأعلى 3", "إزاحة يميناً 2 ولأسفل 3", "انعكاس"], correct:0, exp:"y = (x-h)² + k: إزاحة h يميناً (إذا h>0) و k لأعلى (إذا k>0). هنا h=2, k=3."},
+  {id:354, section:"m11", q:"منحنى f(x) = x² + 5 يُحصل من y = x² بـ:", options:["إزاحة يميناً 5", "إزاحة يساراً 5", "إزاحة لأعلى 5", "إزاحة لأسفل 5"], correct:2, exp:"إضافة ثابت k > 0 خارج الدالة يسبب إزاحة رأسية لأعلى بمقدار k."},
+  {id:355, section:"m11", q:"منحنى f(x) = -x² من y = x² بـ:", options:["إزاحة لأسفل", "انعكاس حول المحور x", "انعكاس حول المحور y", "تمدد"], correct:1, exp:"الضرب في -1 خارج الدالة = انعكاس حول المحور x."},
+  {id:356, section:"m11", q:"منحنى f(x) = (-x)² من y = x² (وهما متطابقان):", options:["مختلف تماماً", "نفس المنحنى", "انعكاس حول y", "مقلوب"], correct:1, exp:"(-x)² = x². لأن الدالة زوجية متماثلة حول محور y، والانعكاس حول y لا يغيرها."},
+  {id:357, section:"m11", q:"منحنى f(x) = 2x² مقارنة بـ y = x²:", options:["مضيّق رأسياً", "موسّع رأسياً", "مُزاح", "منعكس"], correct:0, exp:"الضرب في معامل > 1 خارج الدالة يسبب تمدداً رأسياً (المنحنى يصبح أضيق)."},
+  {id:358, section:"m11", q:"منحنى f(x) = (1/2)x² مقارنة بـ y = x²:", options:["مضيّق", "موسّع أفقياً", "مضغوط رأسياً (أعرض)", "منعكس"], correct:2, exp:"الضرب في 0 < k < 1 يسبب تقلصاً رأسياً (المنحنى يصبح أعرض)."},
+  {id:359, section:"m11", q:"الدالة f(x) = x³ زوجية/فردية؟", options:["زوجية", "فردية", "لا زوجية ولا فردية", "ثابتة"], correct:1, exp:"f(-x) = -x³ = -f(x). الدالة فردية متماثلة حول نقطة الأصل."},
+  {id:360, section:"m11", q:"الدالة f(x) = |x| + 1 زوجية/فردية؟", options:["زوجية", "فردية", "لا هذه ولا تلك", "ثابتة"], correct:0, exp:"f(-x) = |-x| + 1 = |x| + 1 = f(x). زوجية."},
+  {id:361, section:"m11", q:"الدالة f(x) = x³ + x دالة:", options:["زوجية", "فردية", "ثابتة", "متذبذبة"], correct:1, exp:"f(-x) = -x³ - x = -(x³+x) = -f(x). مجموع دالتين فرديتين = فردية."},
+  {id:362, section:"m11", q:"قيمة الرأس للدالة f(x) = (x-3)² + 4:", options:["(3, 4)", "(-3, 4)", "(3, -4)", "(4, 3)"], correct:0, exp:"الصيغة القياسية a(x-h)² + k رأسها (h, k). هنا (3, 4)."},
+  {id:363, section:"m11", q:"إحداثي x للرأس في f(x) = x² - 6x + 5:", options:["3", "-3", "6", "5"], correct:0, exp:"x للرأس = -b/(2a) = 6/2 = 3."},
+  {id:364, section:"m11", q:"القيمة الدنيا لـ f(x) = x² - 4x + 7:", options:["3", "4", "7", "-3"], correct:0, exp:"x للرأس = 2. f(2) = 4 - 8 + 7 = 3. الدنيا = 3."},
+  {id:365, section:"m11", q:"الدالة f(x) = 2x + 3 في الفترة (-∞, ∞):", options:["متزايدة", "متناقصة", "ثابتة", "متذبذبة"], correct:0, exp:"الميل 2 > 0 فالدالة متزايدة."},
+  {id:366, section:"m11", q:"الدالة f(x) = -3x + 7:", options:["متزايدة", "متناقصة", "ثابتة", "غير معرفة"], correct:1, exp:"الميل -3 < 0 فالدالة متناقصة."},
+  {id:367, section:"m11", q:"إذا كانت f'(x) > 0 على فترة، فإن f على تلك الفترة:", options:["متزايدة", "متناقصة", "ثابتة", "متذبذبة"], correct:0, exp:"المشتقة الموجبة تعني زيادة. المشتقة السالبة تعني تناقصاً."},
+  {id:368, section:"m11", q:"نقطة انعطاف تحدث عندما:", options:["f'(x) = 0", "f''(x) = 0 مع تغير إشارتها", "f(x) = 0", "f'(x) = 1"], correct:1, exp:"نقطة الانعطاف هي نقطة يتغير فيها التقعر، حيث f''(x) = 0 وتغير إشارة."},
+  {id:369, section:"m11", q:"الدالة f(x) = x² لها قيمة دنيا عند:", options:["x = 0", "x = 1", "x = -1", "x = ∞"], correct:0, exp:"الرأس عند x = 0، والدالة مقعرة لأعلى. القيمة الدنيا f(0) = 0."},
+  {id:370, section:"m11", q:"إذا كانت f''(c) > 0 عند نقطة حرجة c:", options:["نهاية عظمى", "نهاية صغرى", "انعطاف", "لا شيء"], correct:1, exp:"f'(c)=0 و f''(c)>0 تعني تقعر لأعلى والنقطة نهاية صغرى محلية."},
+  {id:371, section:"m11", q:"إذا كانت f''(c) < 0 عند نقطة حرجة:", options:["نهاية عظمى", "نهاية صغرى", "انعطاف", "ثابتة"], correct:0, exp:"f''(c)<0: تقعر لأسفل، والنقطة نهاية عظمى محلية."},
+  {id:372, section:"m11", q:"الدالة f(x) = sin x لها خط تماثل:", options:["المحور x", "المحور y", "نقطة الأصل", "ليس لها"], correct:2, exp:"sin x دالة فردية، متماثلة حول نقطة الأصل."},
+  {id:373, section:"m11", q:"الدالة f(x) = cos x متماثلة حول:", options:["نقطة الأصل", "المحور y", "المحور x", "لا شيء"], correct:1, exp:"cos x زوجية، متماثلة حول محور y."},
+  {id:374, section:"m11", q:"التركيب (f ∘ g)(x) =", options:["f(x) · g(x)", "f(x) + g(x)", "f(g(x))", "g(f(x))"], correct:2, exp:"تركيب الدوال: (f∘g)(x) = f(g(x)). نطبق g أولاً ثم f."},
+  {id:375, section:"m11", q:"إذا كانت f(x) = 2x و g(x) = x + 1، فإن (f∘g)(3) =", options:["7", "8", "6", "14"], correct:1, exp:"g(3) = 4، ثم f(4) = 8. أو مباشرة: f(g(x)) = 2(x+1) = 2x+2، ثم عند x=3: 8."},
+  {id:376, section:"m11", q:"التحويل y = f(x + 2) يعني:", options:["إزاحة يساراً 2", "إزاحة يميناً 2", "إزاحة لأعلى 2", "إزاحة لأسفل 2"], correct:0, exp:"f(x+2): x تستبدل بـ x+2 (الفاصلة تنقص 2)، فالمنحنى يُزاح يساراً."},
+  {id:377, section:"m11", q:"التحويل y = f(x) - 3:", options:["إزاحة يساراً 3", "إزاحة يميناً 3", "إزاحة لأعلى 3", "إزاحة لأسفل 3"], correct:3, exp:"الطرح من الدالة كلها = إزاحة رأسية لأسفل."},
+  {id:378, section:"m11", q:"التحويل y = f(-x):", options:["انعكاس حول المحور x", "انعكاس حول المحور y", "إزاحة", "تمدد"], correct:1, exp:"f(-x) هو انعكاس المنحنى حول المحور y."},
+  {id:379, section:"m11", q:"التحويل y = -f(x):", options:["انعكاس حول المحور x", "انعكاس حول المحور y", "تمدد", "تقلص"], correct:0, exp:"-f(x) هو انعكاس المنحنى حول المحور x."},
+  {id:380, section:"m11", q:"الدالة f(x) = 2(x-1)² - 3 رأسها:", options:["(1, -3)", "(-1, -3)", "(1, 3)", "(2, -3)"], correct:0, exp:"الصيغة a(x-h)² + k رأسها (h, k) = (1, -3)."},
+  {id:381, section:"m11", q:"أي التالي ليس زوجية ولا فردية؟", options:["f(x) = x²", "f(x) = x³", "f(x) = x² + x", "f(x) = |x|"], correct:2, exp:"f(x) = x² + x: f(-x) = x² - x ≠ f(x) و ≠ -f(x)."},
+  {id:382, section:"m11", q:"الدالة الثابتة f(x) = k دالة:", options:["زوجية", "فردية", "ثابتة", "زوجية وفردية"], correct:0, exp:"f(-x) = k = f(x). الدوال الثابتة جميعها زوجية."},
+  {id:383, section:"m11", q:"في منحنى y = x² - 4x + 3، قيمة المحور التماثلي:", options:["x = 0", "x = 2", "x = -2", "x = 1"], correct:1, exp:"محور التماثل عند x = -b/(2a) = 4/2 = 2."},
+  {id:384, section:"m11", q:"مقطع y للدالة f(x) = 3x² - 6x + 8:", options:["3", "-6", "8", "2"], correct:2, exp:"المقطع الصادي = f(0) = 8."},
+  {id:385, section:"m12", q:"قيمة log₁₀ 100 =", options:["1", "2", "10", "100"], correct:1, exp:"log₁₀ 100 = log₁₀ 10² = 2. تعريف log: log_a b = c ⟺ aᶜ = b."},
+  {id:386, section:"m12", q:"قيمة log₂ 8 =", options:["2", "3", "4", "8"], correct:1, exp:"8 = 2³ فـ log₂ 8 = 3."},
+  {id:387, section:"m12", q:"log_a 1 =", options:["0", "1", "a", "غير معرف"], correct:0, exp:"a⁰ = 1 لكل a > 0 فـ log_a 1 = 0."},
+  {id:388, section:"m12", q:"log_a a =", options:["0", "1", "a", "a²"], correct:1, exp:"a¹ = a، فـ log_a a = 1."},
+  {id:389, section:"m12", q:"حل log₃ x = 2:", options:["x = 6", "x = 9", "x = 3", "x = 1"], correct:1, exp:"log₃ x = 2 ⟺ x = 3² = 9."},
+  {id:390, section:"m12", q:"log 50 + log 2 =", options:["log 52", "log 100", "log 25", "log 48"], correct:1, exp:"log a + log b = log(ab): log(50 × 2) = log 100 = 2."},
+  {id:391, section:"m12", q:"log 1000 - log 100 =", options:["log 10", "log 900", "1", "3"], correct:2, exp:"log(1000/100) = log 10 = 1."},
+  {id:392, section:"m12", q:"log₂ 16³ =", options:["4", "6", "12", "48"], correct:2, exp:"log_a bⁿ = n log_a b. = 3 × log₂ 16 = 3 × 4 = 12."},
+  {id:393, section:"m12", q:"حل 2ˣ = 64:", options:["x = 4", "x = 5", "x = 6", "x = 32"], correct:2, exp:"64 = 2⁶. فـ x = 6."},
+  {id:394, section:"m12", q:"ln e =", options:["0", "1", "e", "غير معرفة"], correct:1, exp:"ln = log بأساس e. فـ ln e = 1."},
+  {id:395, section:"m12", q:"ln 1 =", options:["0", "1", "e", "-1"], correct:0, exp:"log لأي عدد من 1 = 0. ln 1 = 0."},
+  {id:396, section:"m12", q:"مجال f(x) = log(x - 3):", options:["x > 3", "x ≥ 3", "x < 3", "ℝ"], correct:0, exp:"log معرف للموجب: x - 3 > 0 ⟹ x > 3."},
+  {id:397, section:"m12", q:"الدالة العكسية لـ f(x) = eˣ:", options:["e⁻ˣ", "ln x", "1/eˣ", "log x"], correct:1, exp:"f⁻¹ للدالة الأسية eˣ هي اللوغاريتم الطبيعي ln x."},
+  {id:398, section:"m12", q:"حل log₂(x - 1) = 3:", options:["x = 7", "x = 9", "x = 8", "x = 4"], correct:1, exp:"x - 1 = 2³ = 8 ⟹ x = 9."},
+  {id:399, section:"m12", q:"قيمة 10^(log 5):", options:["5", "log 5", "50", "1"], correct:0, exp:"بالخاصية العكسية: a^(log_a x) = x. فـ 10^(log₁₀ 5) = 5."},
+  {id:400, section:"m12", q:"أي غير معرف؟", options:["log 0", "log 1", "log 10", "log 100"], correct:0, exp:"log 0 غير معرف (لا يوجد أس يجعل 10 صفراً). log السالب أيضاً غير معرف."},
+  {id:401, section:"m12", q:"إذا كان log 2 ≈ 0.301، فإن log 200 ≈", options:["2.301", "0.602", "1.301", "0.301"], correct:0, exp:"log 200 = log(2 × 100) = log 2 + 2 = 0.301 + 2 = 2.301."},
+  {id:402, section:"m12", q:"قانون تغيير الأساس: log_a b =", options:["log a/log b", "log b/log a", "log a + log b", "log(a·b)"], correct:1, exp:"log_a b = log_c b / log_c a. مفيد لحساب اللوغاريتم بأساسات غير 10 و e."},
+  {id:403, section:"m12", q:"log₂ 1/4 =", options:["2", "-2", "4", "-4"], correct:1, exp:"1/4 = 2⁻². فـ log₂(1/4) = -2."},
+  {id:404, section:"m12", q:"الدالة f(x) = aˣ عند a > 1:", options:["متزايدة", "متناقصة", "ثابتة", "متذبذبة"], correct:0, exp:"إذا a > 1: متزايدة. إذا 0 < a < 1: متناقصة."},
+  {id:405, section:"m12", q:"منحنى f(x) = 2ˣ يقطع محور y في:", options:["(0, 0)", "(0, 1)", "(0, 2)", "(1, 2)"], correct:1, exp:"f(0) = 2⁰ = 1. أي دالة أسية aˣ تقطع y في (0, 1)."},
+  {id:406, section:"m12", q:"حل eˣ = 10:", options:["x = log 10", "x = ln 10", "x = 10/e", "x = e¹⁰"], correct:1, exp:"eˣ = 10 ⟺ x = ln 10."},
+  {id:407, section:"m12", q:"النمو السكاني N(t) = N₀ eʳᵗ، المعامل r يمثل:", options:["الكمية الابتدائية", "معدل النمو النسبي", "الزمن", "الثابت الطبيعي"], correct:1, exp:"r هو معدل النمو النسبي (لكل وحدة زمن). r > 0 نمو، r < 0 اضمحلال."},
+  {id:408, section:"m12", q:"اضمحلال إشعاعي: N = N₀ e⁻ᵏᵗ، عند t = t½ (نصف العمر):", options:["N = N₀", "N = N₀/2", "N = 0", "N = 2N₀"], correct:1, exp:"نصف العمر: الزمن الذي تصبح فيه الكمية = نصف الابتدائية. N = N₀/2."},
+  {id:409, section:"m12", q:"حل 3^(x+2) = 81:", options:["x = 2", "x = 4", "x = 1", "x = 5"], correct:0, exp:"81 = 3⁴. x + 2 = 4 ⟹ x = 2."},
+  {id:410, section:"m12", q:"حل log(x+1) - log x = 1:", options:["x = 1/9", "x = 9", "x = 1", "x = 10"], correct:0, exp:"log((x+1)/x) = 1 ⟹ (x+1)/x = 10 ⟹ x+1 = 10x ⟹ 9x = 1 ⟹ x = 1/9."},
+  {id:411, section:"m12", q:"log₃ 9 + log₃ 27 =", options:["2", "3", "5", "36"], correct:2, exp:"= log₃(9·27) = log₃ 243 = log₃ 3⁵ = 5. (أو 2 + 3 = 5)."},
+  {id:412, section:"m12", q:"إذا كان eˣ = 7 فإن x =", options:["log 7", "ln 7", "7/e", "e⁷"], correct:1, exp:"x = ln 7 (بتعريف اللوغاريتم الطبيعي)."},
+  {id:413, section:"m12", q:"الدالة f(x) = log₁₀ x تقطع المحور x في:", options:["(0, 0)", "(1, 0)", "(10, 0)", "(0, 1)"], correct:1, exp:"log₁₀ x = 0 ⟺ x = 1. تقطع x في (1, 0)."},
+  {id:414, section:"m12", q:"خاصية log(aᵇ):", options:["b + log a", "b · log a", "log(a) + log(b)", "a · log b"], correct:1, exp:"قاعدة الأس في اللوغاريتم: log(aᵇ) = b · log a."},
+  {id:415, section:"m12", q:"المعادلة y = 2 · 3ˣ:", options:["نمو أسي", "اضمحلال أسي", "خطية", "لوغاريتمية"], correct:0, exp:"دالة أسية بأساس > 1 (هو 3)، فتمثل نمواً أسياً."},
+  {id:416, section:"m12", q:"المعادلة y = 5 · (0.8)ˣ:", options:["نمو أسي", "اضمحلال أسي", "خطية", "لوغاريتمية"], correct:1, exp:"دالة أسية بأساس بين 0 و 1 (هو 0.8)، فتمثل اضمحلالاً."},
+  {id:417, section:"m12", q:"مقارنة log₂ 3 و log₂ 5:", options:["متساويان", "log₂ 3 > log₂ 5", "log₂ 3 < log₂ 5", "لا يمكن"], correct:2, exp:"log₂ دالة متزايدة. 3 < 5 ⟹ log₂ 3 < log₂ 5."},
+  {id:418, section:"m12", q:"إذا كان 100% من قيمة استثمار بعد سنة يعطي 1.05 × القيمة، فإن معدل الفائدة السنوي:", options:["1%", "5%", "50%", "105%"], correct:1, exp:"القيمة تضاعفت بعامل 1.05 = زيادة 5%."},
+  {id:419, section:"m12", q:"نصف عمر مادة 10 سنوات، تبقى نسبة بعد 30 سنة:", options:["1/8", "1/16", "1/4", "1/2"], correct:0, exp:"بعد 30 سنة = 3 دورات من نصف العمر. النسبة المتبقية = (1/2)³ = 1/8."},
+  {id:420, section:"m13", q:"معادلة الدائرة مركزها (0,0) ونصف قطرها 4:", options:["x² + y² = 4", "x² + y² = 16", "(x-4)² + y² = 0", "x² + y² = 8"], correct:1, exp:"(x-h)² + (y-k)² = r² مع (0,0) و r=4: x² + y² = 16."},
+  {id:421, section:"m13", q:"دائرة (x-3)² + (y+2)² = 25 مركزها ونصف قطرها:", options:["(3, -2)، 5", "(-3, 2)، 5", "(3, -2)، 25", "(3, 2)، 5"], correct:0, exp:"h=3, k=-2, r²=25 فـ r=5. المركز (3, -2)."},
+  {id:422, section:"m13", q:"القطع المكافئ y = x² رأسه:", options:["(0, 0)", "(1, 0)", "(0, 1)", "(1, 1)"], correct:0, exp:"الصيغة a(x-h)² + k بـ h=0, k=0 فالرأس (0, 0)."},
+  {id:423, section:"m13", q:"محور التماثل للقطع المكافئ y = (x-2)² + 1:", options:["x = 1", "x = 2", "y = 1", "y = 2"], correct:1, exp:"محور التماثل الرأسي x = h = 2."},
+  {id:424, section:"m13", q:"القطع المكافئ y = (x-3)² - 4 رأسه:", options:["(3, -4)", "(-3, -4)", "(3, 4)", "(-3, 4)"], correct:0, exp:"الرأس (h, k) = (3, -4)."},
+  {id:425, section:"m13", q:"القطع المكافئ x² = 4py، البؤرة:", options:["(p, 0)", "(0, p)", "(-p, 0)", "(0, -p)"], correct:1, exp:"للقطع المكافئ x² = 4py (فتحة رأسية)، البؤرة (0, p) والدليل y = -p."},
+  {id:426, section:"m13", q:"في القطع الناقص x²/25 + y²/9 = 1:", options:["a = 5، b = 3", "a = 25، b = 9", "a = 3، b = 5", "a = 5، b = 9"], correct:0, exp:"a² = 25 ⟹ a = 5 (أكبر). b² = 9 ⟹ b = 3. المحور الكبير أفقي."},
+  {id:427, section:"m13", q:"في القطع الناقص x²/25 + y²/9 = 1، البعد البؤري c:", options:["3", "4", "5", "√34"], correct:1, exp:"c² = a² - b² = 25 - 9 = 16 ⟹ c = 4."},
+  {id:428, section:"m13", q:"طول المحور الأكبر في x²/16 + y²/9 = 1:", options:["3", "4", "6", "8"], correct:3, exp:"a² = 16 ⟹ a = 4. طول المحور الأكبر = 2a = 8."},
+  {id:429, section:"m13", q:"القطع الناقص x² + 4y² = 16 المحور الأكبر:", options:["أفقي", "رأسي", "مائل", "منعدم"], correct:0, exp:"القسمة على 16: x²/16 + y²/4 = 1. a²=16 > b²=4 والأكبر تحت x²، فالمحور أفقي."},
+  {id:430, section:"m13", q:"في القطع الزائد x²/a² - y²/b² = 1، c² =", options:["a² + b²", "a² - b²", "a · b", "a + b"], correct:0, exp:"للقطع الزائد: c² = a² + b² (عكس القطع الناقص)."},
+  {id:431, section:"m13", q:"القطع الزائد x²/9 - y²/16 = 1:", options:["a = 3, b = 4", "a = 4, b = 3", "a = 9, b = 16", "a = 3, c = 5"], correct:0, exp:"a² = 9 ⟹ a = 3 (المحور العرضي). b² = 16 ⟹ b = 4."},
+  {id:432, section:"m13", q:"طول المحور العرضي في القطع الزائد x²/25 - y²/144 = 1:", options:["10", "24", "26", "169"], correct:0, exp:"a² = 25 ⟹ a = 5. طول المحور العرضي = 2a = 10."},
+  {id:433, section:"m13", q:"البعد البؤري في قطع زائد x²/9 - y²/16 = 1:", options:["3", "4", "5", "25"], correct:2, exp:"c² = 9 + 16 = 25 ⟹ c = 5."},
+  {id:434, section:"m13", q:"أي المعادلات التالية تمثل دائرة؟", options:["x² + y² = 1", "x² - y² = 1", "x² = 4y", "x²/4 + y² = 1"], correct:0, exp:"للدائرة شرط: معاملا x² و y² متساويان وبنفس الإشارة. فقط x² + y² = 1 يحقق."},
+  {id:435, section:"m13", q:"أي المعادلات تمثل قطع مكافئ؟", options:["x² + y² = 4", "x² - y² = 4", "y = x²", "x² + 4y² = 4"], correct:2, exp:"القطع المكافئ: متغير بدرجة 2 والآخر بدرجة 1. y = x² يحققه."},
+  {id:436, section:"m13", q:"أي يمثل قطع زائد؟", options:["x² + y² = 9", "x² - y² = 9", "x² + 4y² = 9", "y = x² + 9"], correct:1, exp:"القطع الزائد: معاملاهما لـ x² و y² مختلفا الإشارة. x² - y² = 9."},
+  {id:437, section:"m13", q:"أي يمثل قطع ناقص؟", options:["x² + y² = 9", "x² - y² = 9", "x²/9 + y²/4 = 1", "y = x²"], correct:2, exp:"القطع الناقص: معاملاهما موجبان لكن مختلفان. x²/9 + y²/4 = 1."},
+  {id:438, section:"m13", q:"دائرة (x-1)² + (y+3)² = 36 نصف قطرها:", options:["3", "6", "9", "36"], correct:1, exp:"r² = 36 ⟹ r = 6."},
+  {id:439, section:"m13", q:"القطع المكافئ x² = 16y بؤرته:", options:["(0, 4)", "(0, -4)", "(4, 0)", "(16, 0)"], correct:0, exp:"4p = 16 ⟹ p = 4. البؤرة (0, p) = (0, 4). الفتحة لأعلى."},
+  {id:440, section:"m13", q:"معادلة دائرة مركزها (2, -3) ونصف قطرها 5:", options:["(x-2)² + (y+3)² = 25", "(x+2)² + (y-3)² = 25", "(x-2)² + (y+3)² = 5", "(x-2)² + (y-3)² = 25"], correct:0, exp:"الصيغة القياسية مع h=2, k=-3, r=5: (x-2)² + (y+3)² = 25."},
+  {id:441, section:"m13", q:"محيط دائرة مساحتها 16π:", options:["4π", "8π", "16π", "32π"], correct:1, exp:"πr² = 16π ⟹ r = 4. المحيط = 2πr = 8π."},
+  {id:442, section:"m13", q:"مساحة دائرة محيطها 10π:", options:["25π", "100π", "10π", "5π"], correct:0, exp:"2πr = 10π ⟹ r = 5. المساحة = πr² = 25π."},
+  {id:443, section:"m13", q:"أي النقاط تقع على الدائرة x² + y² = 25؟", options:["(3, 4)", "(3, 5)", "(5, 5)", "(6, 0)"], correct:0, exp:"نعوض (3, 4): 9 + 16 = 25 ✓."},
+  {id:444, section:"m13", q:"القطع الناقص دائرة عندما:", options:["a > b", "a = b", "a < b", "c = 0"], correct:3, exp:"عندما c = 0 (أي a = b)، يصبح القطع الناقص دائرة."},
+  {id:445, section:"m13", q:"الخط المستقيم مماس لقطع ناقص إذا:", options:["يقطعه في نقطتين", "يقطعه في نقطة واحدة", "لا يقطعه", "يمر بالمركز"], correct:1, exp:"المماس يلمس المنحنى في نقطة واحدة فقط."},
+  {id:446, section:"m13", q:"خطوط التقارب للقطع الزائد x²/a² - y²/b² = 1:", options:["y = ±(b/a)x", "y = ±(a/b)x", "x = ±a", "y = ±c"], correct:0, exp:"خطوط التقارب للقطع الزائد المتمركز في الأصل: y = ±(b/a)x."},
+  {id:447, section:"m13", q:"أصغر معادلة دائرية في الصيغة العامة:", options:["x² + y² = 0", "x² + y² + 1 = 0", "x² + y² = 1", "x² - y² = 0"], correct:2, exp:"x² + y² = 1 دائرة الوحدة. x² + y² = 0 نقطة واحدة فقط."},
+  {id:448, section:"m13", q:"عند تكبير القطع المكافئ y = x² بالعامل 2 (أوسع):", options:["y = 2x²", "y = x²/2", "y = (2x)²", "y = x² + 2"], correct:1, exp:"y = x²/2 يجعل المنحنى أوسع (أقل ارتفاعاً لنفس x)."},
+  {id:449, section:"m13", q:"القطع المكافئ فتحته للأسفل إذا:", options:["a > 0", "a < 0", "a = 0", "c > 0"], correct:1, exp:"في y = ax² + bx + c: الفتحة لأعلى إذا a>0، للأسفل إذا a<0."},
+  {id:450, section:"m14", q:"المتجه في البعدين يُمثّل بـ:", options:["(x)", "(x, y)", "(x, y, z)", "عدد حقيقي"], correct:1, exp:"المتجه في ℝ² له مكوّنان (x, y)."},
+  {id:451, section:"m14", q:"مقدار المتجه ⟨3, 4⟩:", options:["5", "7", "12", "25"], correct:0, exp:"|v| = √(3² + 4²) = √25 = 5."},
+  {id:452, section:"m14", q:"مقدار ⟨-6, 8⟩:", options:["2", "10", "14", "64"], correct:1, exp:"|v| = √(36 + 64) = √100 = 10."},
+  {id:453, section:"m14", q:"⟨2, 3⟩ + ⟨4, -1⟩ =", options:["⟨6, 2⟩", "⟨6, 4⟩", "⟨-2, 4⟩", "⟨8, -3⟩"], correct:0, exp:"نجمع المكونات المتناظرة: (2+4, 3+(-1)) = (6, 2)."},
+  {id:454, section:"m14", q:"2 · ⟨3, -1⟩ =", options:["⟨5, 1⟩", "⟨6, -2⟩", "⟨6, 1⟩", "⟨3, -2⟩"], correct:1, exp:"ضرب قياسي: 2·(3, -1) = (6, -2)."},
+  {id:455, section:"m14", q:"⟨5, 3⟩ - ⟨2, 1⟩ =", options:["⟨3, 2⟩", "⟨7, 4⟩", "⟨3, 4⟩", "⟨2, 1⟩"], correct:0, exp:"(5-2, 3-1) = (3, 2)."},
+  {id:456, section:"m14", q:"المتجه الصفري هو:", options:["⟨0, 0⟩", "⟨1, 1⟩", "⟨1, 0⟩", "غير معرف"], correct:0, exp:"المتجه الصفري ⟨0, 0⟩ هو العنصر المحايد للجمع."},
+  {id:457, section:"m14", q:"المتجه الوحدة في اتجاه ⟨3, 4⟩:", options:["⟨3/5, 4/5⟩", "⟨3, 4⟩", "⟨1, 1⟩", "⟨5, 5⟩"], correct:0, exp:"المتجه الوحدة = v/|v|. |v| = 5 فـ (3/5, 4/5)."},
+  {id:458, section:"m14", q:"الضرب القياسي (النقطي) ⟨1, 2⟩ · ⟨3, -1⟩ =", options:["3", "1", "5", "-1"], correct:0, exp:"v·u = v₁u₁ + v₂u₂ = (1)(3) + (2)(-1) = 3 - 2 = 1. بالتحقق: 3 + (-2) = 1. فالإجابة 1."},
+  {id:459, section:"m14", q:"المتجهان متعامدان إذا كان ضربهما القياسي:", options:["0", "1", "-1", "مقدارهما"], correct:0, exp:"شرط التعامد: u · v = 0. الضرب القياسي صفر ⟺ المتجهان متعامدان."},
+  {id:460, section:"m14", q:"هل ⟨2, 1⟩ و ⟨-1, 2⟩ متعامدان؟", options:["نعم", "لا", "لا يمكن معرفة", "متوازيان"], correct:0, exp:"(2)(-1) + (1)(2) = -2 + 2 = 0. متعامدان."},
+  {id:461, section:"m14", q:"المتجه i = ⟨1, 0⟩ واتجاهه:", options:["محور x الموجب", "محور y الموجب", "محور x السالب", "أصل"], correct:0, exp:"i المتجه الوحدة في اتجاه محور x الموجب. j = ⟨0, 1⟩ في اتجاه y الموجب."},
+  {id:462, section:"m14", q:"⟨3, 4⟩ بصيغة i و j:", options:["3i + 4j", "4i + 3j", "3i - 4j", "12ij"], correct:0, exp:"⟨a, b⟩ = ai + bj. فـ ⟨3, 4⟩ = 3i + 4j."},
+  {id:463, section:"m14", q:"المتجه بين النقطتين A(1, 2) و B(4, 6):", options:["⟨3, 4⟩", "⟨5, 8⟩", "⟨-3, -4⟩", "⟨4, 6⟩"], correct:0, exp:"AB = B - A = (4-1, 6-2) = (3, 4)."},
+  {id:464, section:"m14", q:"طول المتجه بين (0, 0) و (3, 4):", options:["5", "7", "12", "25"], correct:0, exp:"|v| = √(9+16) = 5."},
+  {id:465, section:"m14", q:"زاوية المتجه ⟨1, 1⟩ مع محور x:", options:["30°", "45°", "60°", "90°"], correct:1, exp:"tan θ = 1/1 = 1 ⟹ θ = 45°."},
+  {id:466, section:"m14", q:"⟨a, b⟩ متوازي لـ ⟨c, d⟩ إذا:", options:["ac + bd = 0", "ad - bc = 0", "a + c = 0", "a = c"], correct:1, exp:"شرط التوازي: المكونات متناسبة (ad = bc أو ad - bc = 0)."},
+  {id:467, section:"m14", q:"في ⟨-3, 4⟩، اتجاه المتجه في الربع:", options:["الأول", "الثاني", "الثالث", "الرابع"], correct:1, exp:"x < 0, y > 0: الربع الثاني."},
+  {id:468, section:"m14", q:"|3v| إذا كان |v| = 5:", options:["5", "15", "8", "25"], correct:1, exp:"|kv| = |k| · |v| = 3 · 5 = 15."},
+  {id:469, section:"m14", q:"المتجهات في ثلاثة أبعاد ⟨x, y, z⟩، مقدار ⟨1, 2, 2⟩:", options:["3", "5", "4", "√5"], correct:0, exp:"|v| = √(1 + 4 + 4) = √9 = 3."},
+  {id:470, section:"m14", q:"زاوية θ بين متجهين u, v:", options:["cos θ = u·v/(|u||v|)", "cos θ = u·v", "tan θ = u/v", "sin θ = u × v"], correct:0, exp:"قانون الزاوية بين متجهين: cos θ = (u·v)/(|u||v|)."},
+  {id:471, section:"m14", q:"المتجه ⟨0, 3⟩:", options:["على محور x", "على محور y", "في الربع الأول", "صفري"], correct:1, exp:"المكون الأفقي 0 والرأسي 3، فالمتجه رأسي على محور y."},
+  {id:472, section:"m14", q:"في مثلث قوى، القوى المتوازنة مجموعها:", options:["متجه صفري", "موجب", "متجه وحدة", "سالب"], correct:0, exp:"القوى المتوازنة: مجموعها = 0 (متجه صفري). الجسم في حالة توازن."},
+  {id:473, section:"m14", q:"إذا كان u = 3i + 4j فإن u · i =", options:["3", "4", "7", "12"], correct:0, exp:"u · i = (3)(1) + (4)(0) = 3. يعطي المكون x."},
+  {id:474, section:"m14", q:"المتجه في الصيغة القطبية ⟨r cos θ, r sin θ⟩ يمثل:", options:["متجه طوله r بزاوية θ", "دائرة", "نقطة فقط", "ثابت"], correct:0, exp:"تعبير عن المتجه بطوله r وزاويته θ مع محور x."},
+  {id:475, section:"m14", q:"إسقاط المتجه v على u = (v · u / |u|²) · u يسمى:", options:["إسقاطاً", "ضرباً", "جمعاً", "دوراناً"], correct:0, exp:"إسقاط v على u: مكون v في اتجاه u."},
+  {id:476, section:"m15", q:"النقطة في الإحداثيات القطبية تكتب:", options:["(x, y)", "(r, θ)", "(r, x)", "(x, θ)"], correct:1, exp:"الإحداثيات القطبية (r, θ) حيث r البعد عن القطب و θ الزاوية من المحور القطبي."},
+  {id:477, section:"m15", q:"تحويل (r, θ) إلى (x, y):", options:["x = r, y = θ", "x = r cos θ, y = r sin θ", "x = θ cos r", "x = r/θ"], correct:1, exp:"x = r cos θ، y = r sin θ."},
+  {id:478, section:"m15", q:"النقطة القطبية (4, π/2) بالإحداثيات الديكارتية:", options:["(4, 0)", "(0, 4)", "(-4, 0)", "(0, -4)"], correct:1, exp:"x = 4 cos(π/2) = 0. y = 4 sin(π/2) = 4. النقطة (0, 4)."},
+  {id:479, section:"m15", q:"النقطة (3, 0) بالإحداثيات القطبية = ؟ ديكارتية:", options:["(3, 0)", "(0, 3)", "(-3, 0)", "(0, -3)"], correct:0, exp:"r = 3, θ = 0 ⟹ x = 3(1) = 3, y = 3(0) = 0. ⟹ (3, 0)."},
+  {id:480, section:"m15", q:"النقطة الديكارتية (0, 0) في القطبية:", options:["(0, 0)", "(0, θ) لأي θ", "(1, 0)", "(r, π)"], correct:1, exp:"نقطة الأصل (القطب) r = 0 مع أي زاوية."},
+  {id:481, section:"m15", q:"النقطة (1, 1) ديكارتية، ما r؟", options:["1", "√2", "2", "1/√2"], correct:1, exp:"r = √(x² + y²) = √(1+1) = √2."},
+  {id:482, section:"m15", q:"النقطة (1, 1) ديكارتية، ما θ؟", options:["0", "π/6", "π/4", "π/2"], correct:2, exp:"tan θ = y/x = 1 ⟹ θ = π/4 (في الربع الأول)."},
+  {id:483, section:"m15", q:"المعادلة القطبية r = 5 تمثل:", options:["خطاً", "دائرة", "قطعاً مكافئاً", "نقطة"], correct:1, exp:"r ثابت يعني جميع النقاط على بعد 5 من القطب ⟹ دائرة مركزها القطب."},
+  {id:484, section:"m15", q:"المعادلة θ = π/4 تمثل:", options:["نقطة", "دائرة", "خطاً مستقيماً", "قطعاً"], correct:2, exp:"θ ثابت يعني خطاً مستقيماً يمر بالقطب بزاوية π/4."},
+  {id:485, section:"m15", q:"المعادلة r = 2 cos θ تمثل:", options:["دائرة", "خطاً", "حلزوناً", "ورقة"], correct:0, exp:"r = 2a cos θ تمثل دائرة مركزها (a, 0) ونصف قطرها a. هنا: مركز (1, 0) ونصف قطر 1."},
+  {id:486, section:"m15", q:"المعادلة r = 2 sin θ تمثل:", options:["دائرة", "خطاً", "قطعاً", "ورقة"], correct:0, exp:"r = 2a sin θ تمثل دائرة مركزها (0, a) ونصف قطرها a."},
+  {id:487, section:"m15", q:"النقطة القطبية (2, π) ديكارتياً:", options:["(2, 0)", "(-2, 0)", "(0, 2)", "(0, -2)"], correct:1, exp:"x = 2 cos π = -2. y = 2 sin π = 0. ⟹ (-2, 0)."},
+  {id:488, section:"m15", q:"r² =", options:["x + y", "x² + y²", "xy", "(x+y)²"], correct:1, exp:"من r cos θ = x و r sin θ = y نجد r² = x² + y²."},
+  {id:489, section:"m15", q:"النقطة القطبية (r, θ) مع r = 0:", options:["نقطة الأصل", "نقطة على دائرة", "نقطة على محور x", "غير معرفة"], correct:0, exp:"r = 0 يعني نقطة الأصل بغض النظر عن θ."},
+  {id:490, section:"m15", q:"المعادلة القطبية r = θ تمثل:", options:["دائرة", "حلزوناً (أرخميدس)", "خطاً", "قطعاً"], correct:1, exp:"r = θ هي حلزون أرخميدس: نصف القطر يزداد خطياً مع الزاوية."},
+  {id:491, section:"m15", q:"r cos θ = 5 تعادل في الديكارتية:", options:["x = 5", "y = 5", "x² + y² = 25", "xy = 5"], correct:0, exp:"r cos θ = x. فـ x = 5 (خط رأسي)."},
+  {id:492, section:"m15", q:"r sin θ = 3 تعادل:", options:["x = 3", "y = 3", "x² + y² = 9", "y² = 3"], correct:1, exp:"r sin θ = y. فـ y = 3 (خط أفقي)."},
+  {id:493, section:"m15", q:"القلب (Cardioid) معادلته القطبية:", options:["r = a + a cos θ", "r = a", "r = θ", "r = cos 2θ"], correct:0, exp:"القلب: r = a(1 + cos θ) أو r = a(1 + sin θ). شكله يشبه القلب."},
+  {id:494, section:"m15", q:"الوردة r = cos 3θ عدد ورقاتها:", options:["3", "6", "1", "9"], correct:0, exp:"الوردة cos nθ أو sin nθ: إذا n فردي فعدد الورقات = n. إذا زوجي = 2n."},
+  {id:495, section:"m15", q:"الوردة r = sin 2θ عدد ورقاتها:", options:["2", "4", "6", "8"], correct:1, exp:"n = 2 (زوجي) فعدد الورقات = 2n = 4."},
+  {id:496, section:"m16", q:"lim(x→2) (x² + 1) =", options:["3", "5", "4", "1"], correct:1, exp:"الدوال كثيرة الحدود متصلة، فنعوّض: (2)² + 1 = 5."},
+  {id:497, section:"m16", q:"lim(x→0) sin x / x =", options:["0", "1", "∞", "-1"], correct:1, exp:"نهاية شهيرة: lim(x→0) sin x/x = 1."},
+  {id:498, section:"m16", q:"lim(x→∞) 1/x =", options:["0", "1", "∞", "-1"], correct:0, exp:"كلما كبر x قلّ 1/x وقرب من 0."},
+  {id:499, section:"m16", q:"lim(x→3) (x²-9)/(x-3) =", options:["0", "6", "3", "غير معرفة"], correct:1, exp:"بالتحليل: (x-3)(x+3)/(x-3) = x+3. عند x=3 ⟹ 6."},
+  {id:500, section:"m16", q:"lim(x→1) (x²-1)/(x-1) =", options:["0", "1", "2", "غير معرفة"], correct:2, exp:"بالتحليل: (x-1)(x+1)/(x-1) = x+1. عند x=1 ⟹ 2."},
+  {id:501, section:"m16", q:"lim(x→0) (1 - cos x)/x² =", options:["0", "1/2", "1", "∞"], correct:1, exp:"نهاية مشهورة: lim (1-cos x)/x² = 1/2."},
+  {id:502, section:"m16", q:"lim(x→∞) (2x+1)/(3x-5) =", options:["0", "2/3", "3/2", "∞"], correct:1, exp:"نقسم على x: (2 + 1/x)/(3 - 5/x) → 2/3."},
+  {id:503, section:"m16", q:"lim(x→∞) (x² + 1)/(x + 2) =", options:["0", "1", "∞", "2"], correct:2, exp:"درجة البسط (2) > درجة المقام (1)، النهاية = ∞."},
+  {id:504, section:"m16", q:"lim(x→∞) 1/x² =", options:["0", "1", "∞", "∞²"], correct:0, exp:"كلما كبر x، قلّ 1/x² باتجاه 0."},
+  {id:505, section:"m16", q:"قاعدة لوبيتال تُستخدم عند:", options:["نهاية 0/0 أو ∞/∞", "0 · ∞ فقط", "x = 0", "عدم وجود مشتقة"], correct:0, exp:"لوبيتال: lim f/g من صورة 0/0 أو ∞/∞ = lim f'/g' إذا وُجدت."},
+  {id:506, section:"m16", q:"بلوبيتال: lim(x→0) sin x/x =", options:["lim cos x/1 = 1", "0", "∞", "-1"], correct:0, exp:"نشتق البسط والمقام: lim(cos x/1) = cos 0/1 = 1."},
+  {id:507, section:"m16", q:"lim(x→2⁻) f(x) يعني:", options:["النهاية من اليمين", "النهاية من اليسار", "نهاية عامة", "لا معنى"], correct:1, exp:"2⁻ يعني من الاتجاه الأقل (من اليسار). 2⁺ من اليمين."},
+  {id:508, section:"m16", q:"دالة متصلة عند x = a إذا:", options:["f(a) معرفة", "lim(x→a) f(x) موجودة", "lim = f(a)", "جميع الثلاثة"], correct:3, exp:"الاتصال عند a: f(a) معرفة، النهاية موجودة، والنهاية = f(a)."},
+  {id:509, section:"m16", q:"الدالة f(x) = 1/x متصلة عند:", options:["كل x", "كل x ≠ 0", "x = 0 فقط", "x > 0 فقط"], correct:1, exp:"1/x غير معرفة عند x = 0 لكنها متصلة في كل ما عدا ذلك."},
+  {id:510, section:"m16", q:"lim(x→0⁺) 1/x =", options:["0", "∞", "-∞", "1"], correct:1, exp:"من اليمين (x موجب صغير): 1/x → +∞."},
+  {id:511, section:"m16", q:"lim(x→0⁻) 1/x =", options:["0", "∞", "-∞", "1"], correct:2, exp:"من اليسار (x سالب صغير): 1/x → -∞."},
+  {id:512, section:"m16", q:"إذا كانت lim من اليمين ≠ lim من اليسار، فالنهاية:", options:["موجودة", "غير موجودة", "صفر", "لا نهائية"], correct:1, exp:"شرط وجود النهاية: النهايتان من الطرفين متساويتان."},
+  {id:513, section:"m16", q:"lim(x→4) √x =", options:["2", "4", "16", "0"], correct:0, exp:"√x دالة متصلة في مجالها. lim(x→4) √x = √4 = 2."},
+  {id:514, section:"m16", q:"lim(x→0) eˣ =", options:["0", "1", "e", "∞"], correct:1, exp:"e⁰ = 1، والدالة الأسية متصلة."},
+  {id:515, section:"m16", q:"lim(h→0) [f(x+h) - f(x)]/h يسمى:", options:["التكامل", "المشتقة", "النهاية", "متوسط"], correct:1, exp:"هذا التعريف الأساسي للمشتقة من المبادئ الأولى."},
+  {id:516, section:"m16", q:"lim(x→∞) xⁿ/eˣ (n موجبة):", options:["0", "1", "∞", "n"], correct:0, exp:"الدالة الأسية تنمو أسرع من أي كثير حدود. النهاية = 0."},
+  {id:517, section:"m16", q:"lim(x→0) x ln x =", options:["0", "-∞", "∞", "1"], correct:0, exp:"صورة 0 · ∞، بلوبيتال أو الخواص: lim(x→0) x ln x = 0."},
+  {id:518, section:"m16", q:"نظرية القيم المتوسطة تتطلب:", options:["اتصال على فترة مغلقة", "تفاضل مطلق", "دالة زوجية", "ثبات الدالة"], correct:0, exp:"نظرية القيم المتوسطة تتطلب الاتصال على فترة مغلقة [a, b]."},
+  {id:519, section:"m17", q:"مشتقة f(x) = x² هي:", options:["2x", "x", "2", "x²"], correct:0, exp:"قاعدة القوة: d(xⁿ)/dx = n · xⁿ⁻¹. هنا n=2 ⟹ 2x."},
+  {id:520, section:"m17", q:"مشتقة الثابت f(x) = 7:", options:["7", "0", "1", "x"], correct:1, exp:"مشتقة أي ثابت = 0 (لا يتغير مع x)."},
+  {id:521, section:"m17", q:"مشتقة f(x) = 5x + 3:", options:["5", "3", "5x", "8"], correct:0, exp:"مشتقة 5x = 5، مشتقة 3 = 0. الناتج 5."},
+  {id:522, section:"m17", q:"d/dx(x³):", options:["3x", "3x²", "x²", "x³"], correct:1, exp:"بقاعدة القوة: 3x² (الأس ينزل والباقي ينقص 1)."},
+  {id:523, section:"m17", q:"d/dx(√x):", options:["1/(2√x)", "√x", "2√x", "1/√x"], correct:0, exp:"√x = x^(1/2). المشتقة = (1/2)x^(-1/2) = 1/(2√x)."},
+  {id:524, section:"m17", q:"d/dx(sin x):", options:["cos x", "-cos x", "sin x", "-sin x"], correct:0, exp:"مشتقة sin x = cos x. تذكر: مشتقة cos x = -sin x."},
+  {id:525, section:"m17", q:"d/dx(cos x):", options:["sin x", "-sin x", "cos x", "tan x"], correct:1, exp:"مشتقة cos x = -sin x (الإشارة السالبة مهمة)."},
+  {id:526, section:"m17", q:"d/dx(eˣ):", options:["eˣ", "xeˣ⁻¹", "1", "e"], correct:0, exp:"الدالة الأسية eˣ تساوي مشتقتها."},
+  {id:527, section:"m17", q:"d/dx(ln x):", options:["1/x", "ln x", "eˣ", "x"], correct:0, exp:"مشتقة ln x = 1/x لـ x > 0."},
+  {id:528, section:"m17", q:"قاعدة الضرب: (fg)' =", options:["f'g'", "f'g + fg'", "f + g", "fg"], correct:1, exp:"قاعدة ليبنتز: (fg)' = f'g + fg'."},
+  {id:529, section:"m17", q:"قاعدة القسمة: (f/g)' =", options:["f'/g'", "(f'g - fg')/g²", "fg'", "(f+g)/g"], correct:1, exp:"قاعدة القسمة: (f/g)' = (f'g - fg')/g²."},
+  {id:530, section:"m17", q:"d/dx[(2x+1)⁵] بقاعدة السلسلة:", options:["5(2x+1)⁴", "10(2x+1)⁴", "2(2x+1)⁵", "5(2x+1)⁴·2"], correct:1, exp:"السلسلة: 5(2x+1)⁴ × 2 = 10(2x+1)⁴."},
+  {id:531, section:"m17", q:"مشتقة f(x) = x² + 4x - 3:", options:["2x + 4", "x + 4", "2x", "x² + 4"], correct:0, exp:"نشتق حداً حداً: 2x + 4 + 0."},
+  {id:532, section:"m17", q:"عند النقطة الحرجة f':", options:["= 0 أو غير معرفة", "> 0", "< 0", "= 1"], correct:0, exp:"النقاط الحرجة: f'=0 أو غير موجودة. مرشحات للنهاية العظمى/الصغرى."},
+  {id:533, section:"m17", q:"إذا كانت f'(c) > 0 فإن f عند c:", options:["متزايدة", "متناقصة", "ثابتة", "غير معرفة"], correct:0, exp:"المشتقة الموجبة تعني زيادة، السالبة تعني تناقصاً."},
+  {id:534, section:"m17", q:"d/dx(tan x):", options:["sec²x", "-sec²x", "sec x", "csc²x"], correct:0, exp:"مشتقة tan x = sec²x."},
+  {id:535, section:"m17", q:"∫ x² dx =", options:["x³", "x³/3 + C", "2x", "x²/2 + C"], correct:1, exp:"عكس قاعدة القوة: ∫xⁿdx = xⁿ⁺¹/(n+1) + C."},
+  {id:536, section:"m17", q:"∫ 1 dx =", options:["0", "x + C", "1", "x"], correct:1, exp:"تكامل الثابت 1 = x + C."},
+  {id:537, section:"m17", q:"∫ 2x dx =", options:["x²", "x² + C", "2", "2x²"], correct:1, exp:"∫2xdx = x² + C."},
+  {id:538, section:"m17", q:"∫ eˣ dx =", options:["eˣ", "eˣ + C", "xeˣ", "1"], correct:1, exp:"التكامل والتفاضل للدالة الأسية متساويان."},
+  {id:539, section:"m17", q:"∫ cos x dx =", options:["sin x + C", "-sin x + C", "cos x + C", "tan x + C"], correct:0, exp:"تكامل cos x = sin x + C."},
+  {id:540, section:"m17", q:"∫ sin x dx =", options:["-cos x + C", "cos x + C", "sin x + C", "-sin x + C"], correct:0, exp:"تكامل sin x = -cos x + C."},
+  {id:541, section:"m17", q:"∫ (1/x) dx =", options:["ln|x| + C", "1/x²", "x + C", "-1/x"], correct:0, exp:"∫(1/x)dx = ln|x| + C. القيمة المطلقة ضرورية."},
+  {id:542, section:"m17", q:"∫₀¹ x dx =", options:["0", "1/2", "1", "2"], correct:1, exp:"x²/2 من 0 إلى 1 = 1/2 - 0 = 1/2."},
+  {id:543, section:"m17", q:"∫₀² 2x dx =", options:["2", "4", "0", "8"], correct:1, exp:"x² من 0 إلى 2 = 4 - 0 = 4."},
+  {id:544, section:"m17", q:"النظرية الأساسية للتكامل:", options:["∫f'(x)dx = f(x)", "∫f(x)dx = f(a) - f(b)", "∫_a^b f'(x)dx = f(b) - f(a)", "∫ = Σ"], correct:2, exp:"النظرية الأساسية: ∫_a^b f'(x)dx = f(b) - f(a). التكامل عكس التفاضل."},
+  {id:545, section:"m17", q:"∫₁² (1/x) dx =", options:["ln 2", "ln 1", "1", "0"], correct:0, exp:"ln|x| من 1 إلى 2 = ln 2 - 0 = ln 2."},
+  {id:546, section:"m17", q:"∫ (3x² + 2x) dx =", options:["x³ + x² + C", "3x³ + 2x² + C", "x³ + 2x + C", "6x + 2"], correct:0, exp:"∫3x² = x³، ∫2x = x². الناتج x³ + x² + C."},
+  {id:547, section:"m17", q:"∫₀^π sin x dx =", options:["0", "1", "2", "-2"], correct:2, exp:"[-cos x] من 0 إلى π = -cos π + cos 0 = 1 + 1 = 2."},
+  {id:548, section:"m17", q:"معادلة المماس لـ y = x² عند (1, 1):", options:["y = 2x - 1", "y = 2x + 1", "y = x - 1", "y = x"], correct:0, exp:"الميل = f'(1) = 2. y - 1 = 2(x - 1) ⟹ y = 2x - 1."},
+  {id:549, section:"m17", q:"في اختبار المشتقة الأولى، إذا تغيرت إشارة f' من + إلى - عند c:", options:["c نهاية عظمى", "c نهاية صغرى", "c انعطاف", "لا شيء"], correct:0, exp:"من + إلى -: كانت متزايدة ثم متناقصة، فـ c نهاية عظمى محلية."},
+  {id:550, section:"m17", q:"d/dx(x⁴ - 2x² + 7):", options:["4x³ - 4x", "4x³ + 4x", "x⁴ - 2x", "4x - 2"], correct:0, exp:"نشتق حداً حداً: 4x³ - 4x + 0."},
+  {id:551, section:"m17", q:"المساحة تحت y = x² من 0 إلى 1:", options:["1", "1/2", "1/3", "1/4"], correct:2, exp:"∫₀¹ x² dx = x³/3 = 1/3."},
+  {id:552, section:"m17", q:"∫ x³ dx =", options:["x⁴/4 + C", "3x²", "4x⁴ + C", "x³/3"], correct:0, exp:"بقاعدة القوة: x⁴/4 + C."},
+  {id:553, section:"m17", q:"معدل التغير اللحظي عند x = a هو:", options:["f(a)", "f'(a)", "f(a)/a", "متوسط"], correct:1, exp:"معدل التغير اللحظي = المشتقة = f'(a). يمثل ميل المماس."},
+  {id:554, section:"m17", q:"إذا كانت f(x) = 3x² فإن f'(2) =", options:["12", "6", "9", "4"], correct:0, exp:"f'(x) = 6x. عند x=2: f'(2) = 12."},
+  {id:555, section:"m17", q:"إذا كانت s(t) = 16t² فإن السرعة عند t = 3:", options:["32", "96", "48", "144"], correct:1, exp:"v(t) = s'(t) = 32t. عند t=3: v = 96."},
+  {id:556, section:"m17", q:"التسارع a(t) = s''(t). إذا s(t) = t³ فإن a(2) =", options:["6", "12", "18", "24"], correct:1, exp:"s'(t) = 3t²، s''(t) = 6t. a(2) = 12."},
+  {id:557, section:"m17", q:"قاعدة السلسلة: d/dx[f(g(x))] =", options:["f'(g(x))", "f'(g(x)) · g'(x)", "f(g'(x))", "f'(x) · g'(x)"], correct:1, exp:"قاعدة السلسلة: (f∘g)' = f'(g) · g'."},
+  {id:558, section:"m17", q:"مشتقة y = sin(3x):", options:["cos(3x)", "3 cos(3x)", "sin(3x)", "3 sin(3x)"], correct:1, exp:"بالسلسلة: cos(3x) × 3 = 3 cos(3x)."},
+  {id:559, section:"m17", q:"مشتقة y = e^(2x):", options:["2eˣ", "e^(2x)", "2e^(2x)", "2xeˣ"], correct:2, exp:"بالسلسلة: e^(2x) × 2 = 2e^(2x)."},
+  {id:560, section:"m17", q:"مشتقة y = ln(x²):", options:["1/x²", "2/x", "2x/x²", "2x ln x"], correct:1, exp:"ln(x²) = 2 ln x. المشتقة = 2/x."},
+  {id:561, section:"m11", q:"الدالة f(x) = |x - 3| رأسها عند:", options:["x = 0", "x = 3", "x = -3", "y = 0"], correct:1, exp:"دالة القيمة المطلقة |x - h| لها رأس على شكل V عند x = h. هنا h = 3."},
+  {id:562, section:"m11", q:"أي التالي يمثل إزاحة رأسية للدالة f(x)؟", options:["f(x + k)", "f(x - k)", "f(x) + k", "f(kx)"], correct:2, exp:"f(x) + k إزاحة رأسية (لأعلى إذا k>0). f(x+k) إزاحة أفقية."},
+  {id:563, section:"m11", q:"الخطوط المقاربة الرأسية لدالة كسرية تحدث عند:", options:["أصفار البسط", "أصفار المقام", "ذروة الدالة", "تقاطع المحاور"], correct:1, exp:"المقاربات الرأسية تحدث حيث المقام = 0 (تقترب الدالة من ±∞)."},
+  {id:564, section:"m11", q:"الدالة f(x) = x⁴ عدد نقاط انعطافها:", options:["0", "1", "2", "3"], correct:0, exp:"f'' = 12x² ≥ 0 دائماً ولا تتغير إشارتها، فلا توجد نقاط انعطاف."},
+  {id:565, section:"m11", q:"الدالة f(x) = x³ لها نقطة انعطاف عند:", options:["x = 1", "x = 0", "x = -1", "لا توجد"], correct:1, exp:"f'' = 6x، تتغير إشارتها عند x = 0. نقطة الانعطاف (0, 0)."},
+  {id:566, section:"m13", q:"القطع المكافئ y² = 8x فتحته:", options:["لأعلى", "لأسفل", "يميناً", "يساراً"], correct:2, exp:"y² = 4px مع p > 0: فتحة يميناً. هنا 4p = 8 ⟹ p = 2."},
+  {id:567, section:"m13", q:"القطع المكافئ y = -x² فتحته:", options:["لأعلى", "لأسفل", "يميناً", "يساراً"], correct:1, exp:"y = ax² مع a < 0: فتحة لأسفل."},
+  {id:568, section:"m13", q:"البعد البؤري للقطع الناقص x²/100 + y²/64 = 1:", options:["6", "8", "36", "10"], correct:0, exp:"c² = 100 - 64 = 36 ⟹ c = 6."},
+  {id:569, section:"m13", q:"نصف المحور الأصغر في x²/36 + y²/25 = 1:", options:["5", "6", "11", "25"], correct:0, exp:"b² = 25 ⟹ b = 5 (النصف الأصغر)."},
+  {id:570, section:"m14", q:"حاصل الضرب القياسي لمتجه مع نفسه v·v يساوي:", options:["|v|", "|v|²", "0", "1"], correct:1, exp:"v · v = |v|² (مربع طول المتجه)."},
+  {id:571, section:"m14", q:"إذا كان |u| = 5, |v| = 3، والزاوية بينهما 60°، فإن u·v =", options:["7.5", "10", "15", "4"], correct:0, exp:"u·v = |u||v| cos θ = 5(3) cos 60° = 15(0.5) = 7.5."},
+  {id:572, section:"m14", q:"المتجه ⟨-3, -4⟩ مقداره:", options:["5", "7", "12", "25"], correct:0, exp:"|v| = √(9+16) = 5. المقدار موجب دائماً."},
+  {id:573, section:"m14", q:"⟨2, 1, 3⟩ + ⟨-1, 4, 0⟩ =", options:["⟨1, 5, 3⟩", "⟨3, -3, 3⟩", "⟨1, 4, 3⟩", "⟨2, 4, 0⟩"], correct:0, exp:"نجمع المركبات: (2-1, 1+4, 3+0) = (1, 5, 3)."},
+  {id:574, section:"m14", q:"المتجهان المتساويان لهما:", options:["نفس المقدار فقط", "نفس الاتجاه فقط", "نفس المقدار والاتجاه", "نفس نقطة البداية"], correct:2, exp:"متجهان متساويان إذا كان لهما المقدار والاتجاه نفساهما (بغض النظر عن موقع البداية)."},
+  {id:575, section:"m14", q:"المتجه -v مقارنة بـ v:", options:["أطول منه", "نفس المقدار واتجاه معاكس", "أقصر", "متعامد معه"], correct:1, exp:"-v له نفس المقدار لكن في الاتجاه المعاكس تماماً."},
+  {id:576, section:"m15", q:"النقطة القطبية (5, π) في الديكارتية:", options:["(5, 0)", "(-5, 0)", "(0, 5)", "(0, -5)"], correct:1, exp:"x = 5 cos π = -5. y = 5 sin π = 0."},
+  {id:577, section:"m15", q:"النقطة القطبية (2, π/4) ديكارتياً:", options:["(√2, √2)", "(2, 2)", "(1, 1)", "(2√2, 2√2)"], correct:0, exp:"x = 2 cos(π/4) = 2(√2/2) = √2. y = 2 sin(π/4) = √2."},
+  {id:578, section:"m15", q:"النقطة الديكارتية (0, 3) بالقطبية:", options:["(3, 0)", "(3, π/2)", "(3, π)", "(3, 3π/2)"], correct:1, exp:"r = 3، الزاوية = π/2 (على محور y الموجب)."},
+  {id:579, section:"m15", q:"المعادلة r = 4 cos θ أكبر قيمة لـ r عندما:", options:["θ = 0", "θ = π/2", "θ = π", "θ = 2π"], correct:0, exp:"cos θ أقصاها 1 عند θ = 0. فـ r max = 4."},
+  {id:580, section:"m15", q:"الحلزون الأرخميدي r = aθ يتسع:", options:["تدريجياً بزيادة θ", "ثابت", "يتناقص", "متذبذب"], correct:0, exp:"r = aθ يزداد خطياً مع θ، فالحلزون يتوسع باستمرار."},
+  {id:581, section:"m15", q:"المعادلة القطبية للخط y = 3:", options:["r = 3", "r sin θ = 3", "r cos θ = 3", "θ = 3"], correct:1, exp:"y = r sin θ = 3."},
+  {id:582, section:"m15", q:"المعادلة القطبية للخط x = 2:", options:["r = 2", "r sin θ = 2", "r cos θ = 2", "θ = 2"], correct:2, exp:"x = r cos θ = 2."},
+  {id:583, section:"m15", q:"إذا كانت r² = x² + y² و r = 5، فإن x² + y² =", options:["5", "10", "25", "√5"], correct:2, exp:"r² = 25 ⟹ x² + y² = 25 (دائرة نصف قطرها 5)."},
+  {id:584, section:"m15", q:"المنحنى r = 3(1 - sin θ) نوعه:", options:["قلب (Cardioid)", "وردة", "دائرة", "خط"], correct:0, exp:"r = a(1 ± sin θ) أو r = a(1 ± cos θ) منحنى قلب."},
+  {id:585, section:"m15", q:"إحداثيات نقطة الأصل (القطب) في الإحداثيات القطبية:", options:["(0, 0)", "(1, 0)", "(0, 1)", "(r, 0)"], correct:0, exp:"r = 0 يمثل القطب (نقطة الأصل) بغض النظر عن θ."},
+  {id:586, section:"m16", q:"lim(x→5) (x² - 25)/(x - 5) =", options:["0", "5", "10", "غير معرفة"], correct:2, exp:"نحلل: (x-5)(x+5)/(x-5) = x+5. عند x=5: 10."},
+  {id:587, section:"m16", q:"lim(x→∞) 3/x² =", options:["0", "3", "∞", "3/∞"], correct:0, exp:"عندما x → ∞: 3/x² → 0."},
+  {id:588, section:"m16", q:"lim(x→2) (3x + 1) =", options:["3", "4", "6", "7"], correct:3, exp:"الدالة متصلة، نعوض: 3(2) + 1 = 7."},
+  {id:589, section:"m16", q:"lim(x→0) (tan x)/x =", options:["0", "1", "∞", "غير معرفة"], correct:1, exp:"(tan x)/x = (sin x/x) · (1/cos x). عند 0: 1 · 1 = 1."},
+  {id:590, section:"m16", q:"lim(x→-2) (x² - 4)/(x + 2) =", options:["0", "-4", "4", "غير معرفة"], correct:1, exp:"(x-2)(x+2)/(x+2) = x-2. عند x=-2: -4."},
+  {id:591, section:"m16", q:"الدالة f(x) = x²/|x| غير متصلة عند:", options:["x = 1", "x = 0", "x = -1", "كل x"], correct:1, exp:"عند x = 0 المقام صفر والدالة غير معرفة."},
+  {id:592, section:"m16", q:"lim(x→∞) (5x³ + 2x)/(x³ - 1) =", options:["0", "5", "∞", "1/5"], correct:1, exp:"أعلى درجة في البسط والمقام x³. النسبة بين معامليهما = 5/1 = 5."},
+  {id:593, section:"m16", q:"lim(x→0) x² cos(1/x) =", options:["0", "1", "غير معرفة", "∞"], correct:0, exp:"|cos(1/x)| ≤ 1، فـ |x² cos(1/x)| ≤ x² → 0. بنظرية القرصنة النهاية = 0."},
+  {id:594, section:"m16", q:"نظرية القيمة الوسطى للاتصال تقول:", options:["f متزايدة", "إذا كانت f متصلة على [a,b] فإنها تمر بكل قيمة بين f(a), f(b)", "f قابلة للاشتقاق", "f دورية"], correct:1, exp:"IVT: الدالة المتصلة تمر بكل قيمة بين القيمتين في طرفي الفترة."},
+]
+
+
+function removeDuplicateQuestions(questions) { const seen = new Set(); return questions.filter(q => { const key = q.q.trim(); if (seen.has(key)) return false; seen.add(key); return true; }); }
+function getQuestionsBySection(secId) { return removeDuplicateQuestions(ALL_MATH_QUESTIONS.filter(q => q.section === secId)); }
+
+let state = { selectedSection: 'all', questions: [], currentIdx: 0, answers: {}, timerInterval: null, timeLimitSec: 120, warningAt: 30, timerActive: true, isRetest: false, wrongIds: [] };
+function formatTime(sec) { const m = Math.floor(sec/60).toString().padStart(2,'0'); const s = (sec%60).toString().padStart(2,'0'); return `${m}:${s}`; }
+function renderHome() {
+  const grid = document.getElementById('sectionsGrid');
+  const uniqueAll = removeDuplicateQuestions(ALL_MATH_QUESTIONS);
+  document.getElementById('totalQCount').textContent = uniqueAll.length + ' سؤال';
+  grid.innerHTML = MATH_SECTIONS.map(sec => {
+    const count = getQuestionsBySection(sec.id).length;
+    return `<div class="section-card" style="--primary:${sec.color}" onclick="selectSection('${sec.id}')"><span class="check-mark">✅</span><span class="icon">${sec.icon}</span><h3>${sec.name}</h3><span class="q-badge" style="background:${sec.color}">${count} سؤال</span></div>`;
+  }).join('');
+}
+function selectSection(id) { state.selectedSection = id; document.querySelectorAll('.section-card, .full-exam-card').forEach(c=>c.classList.remove('selected')); if(id==='all') document.getElementById('fullExamCard').classList.add('selected'); else document.querySelector(`.section-card[onclick*="${id}"]`)?.classList.add('selected'); document.getElementById('startBtn').disabled = false; }
+function startExam(retestWrong = false) {
+  let pool = [];
+  if (retestWrong) { pool = ALL_MATH_QUESTIONS.filter(q => state.wrongIds.includes(q.id)); state.isRetest = true; }
+  else { pool = state.selectedSection === 'all' ? [...ALL_MATH_QUESTIONS] : getQuestionsBySection(state.selectedSection); state.isRetest = false; }
+  pool = removeDuplicateQuestions(pool);
+  if (pool.length===0) { alert('لا توجد أسئلة!'); return; }
+  const shuffle = document.getElementById('shuffleCheck').checked;
+  if (shuffle) pool = pool.sort(()=>Math.random()-0.5);
+  const qCount = document.getElementById('qCountSelect').value;
+  if (qCount !== 'all') pool = pool.slice(0, parseInt(qCount));
+  state.questions = pool; state.currentIdx = 0; state.answers = {}; state.timerActive = document.getElementById('timerCheck').checked;
+  document.getElementById('examTitleSpan').textContent = state.isRetest ? '🔁 مراجعة الأخطاء' : (state.selectedSection==='all'?'الاختبار الشامل': MATH_SECTIONS.find(s=>s.id===state.selectedSection)?.name);
+  document.getElementById('homeFloatBtn').style.display = 'block'; switchScreen('examScreen'); renderQuestion(); startQuestionTimer();
+}
+function switchScreen(id) { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); window.scrollTo(0,0); }
+function goHome() { clearInterval(state.timerInterval); document.getElementById('homeFloatBtn').style.display = 'none'; switchScreen('homeScreen'); }
+function startQuestionTimer() {
+  clearInterval(state.timerInterval);
+  if (!state.timerActive) { document.getElementById('questionTimer').textContent = '--:--'; return; }
+  state.questionStartTime = Date.now();
+  state.timerInterval = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - state.questionStartTime) / 1000);
+    const remaining = Math.max(0, state.timeLimitSec - elapsed);
+    const timerSpan = document.getElementById('questionTimer');
+    timerSpan.textContent = formatTime(remaining);
+    timerSpan.classList.toggle('warning', remaining <= state.warningAt);
+    if (remaining <= 0) { clearInterval(state.timerInterval); if (state.currentIdx < state.questions.length-1) nextQuestion(); else showEndConfirm(); }
+  }, 200);
+}
+function renderQuestion() {
+  const q = state.questions[state.currentIdx]; const total = state.questions.length; const answered = Object.keys(state.answers).length;
+  document.getElementById('progressText').textContent = `${state.currentIdx+1}/${total} (أجبت ${answered})`;
+  const userAns = state.answers[q.id]; const letters = ['أ','ب','ج','د'];
+  document.getElementById('questionPanel').innerHTML = `<div class="q-meta"><span>${MATH_SECTIONS.find(s=>s.id===q.section)?.icon} ${MATH_SECTIONS.find(s=>s.id===q.section)?.name}</span><span>⚡ سؤال ${state.currentIdx+1}</span></div><div class="q-text">${q.q}</div><ul class="options-list">${q.options.map((opt,i)=>`<li class="option-item ${userAns===i?'selected':''}" onclick="selectAnswer(${q.id},${i})"><span class="option-letter">${letters[i]}</span><span>${opt}</span></li>`).join('')}</ul>`;
+  document.getElementById('prevBtn').disabled = state.currentIdx === 0;
+  const isLast = state.currentIdx === total-1;
+  document.getElementById('nextBtn').textContent = isLast ? '🏁 إنهاء' : 'التالي ◀';
+  document.getElementById('nextBtn').onclick = isLast ? showEndConfirm : nextQuestion;
+  startQuestionTimer();
+}
+function selectAnswer(qId, optIdx) { state.answers[qId] = optIdx; renderQuestion(); }
+function nextQuestion() { if (state.currentIdx < state.questions.length-1) { state.currentIdx++; renderQuestion(); } }
+function prevQuestion() { if (state.currentIdx > 0) { state.currentIdx--; renderQuestion(); } }
+function showEndConfirm() { document.getElementById('modalMsg').textContent = state.questions.filter(q=> state.answers[q.id]===undefined).length ? 'لديك أسئلة غير مجابة. إنهاء؟' : 'جاهز لرؤية النتيجة؟'; document.getElementById('confirmModal').style.display = 'flex'; }
+function closeModal() { document.getElementById('confirmModal').style.display = 'none'; }
+function forceEndExam() { closeModal(); finishExam(); }
+function finishExam() {
+  clearInterval(state.timerInterval); let correct=0, wrong=0, skip=0; const wrongIds = [];
+  state.questions.forEach(q=>{ const ans = state.answers[q.id]; if (ans === undefined) skip++; else if (ans === q.correct) correct++; else { wrong++; wrongIds.push(q.id); } });
+  state.wrongIds = wrongIds; const total = state.questions.length; const pct = Math.round((correct/total)*100);
+  document.getElementById('finalScore').textContent = pct+'%';
+  document.getElementById('gradeMsg').textContent = pct>=90?'🌟 ممتاز':pct>=75?'👏 جيد جداً':pct>=60?'👍 جيد':'📖 يحتاج مراجعة';
+  document.getElementById('correctStat').textContent = correct; document.getElementById('wrongStat').textContent = wrong; document.getElementById('skipStat').textContent = skip;
+  document.getElementById('retestWrongBtn').style.display = wrongIds.length>0 ? 'inline-flex':'none';
+  buildReviewList(); switchScreen('resultsScreen');
+}
+function buildReviewList() {
+  const container = document.getElementById('reviewList'); const letters = ['أ','ب','ج','د'];
+  container.innerHTML = state.questions.map(q=>{
+    const ua = state.answers[q.id]; const isSkip = ua===undefined; const isCorrect = !isSkip && ua===q.correct;
+    return `<div class="review-item ${isSkip?'skip-card':(isCorrect?'correct-card':'wrong-card')}" data-status="${isSkip?'skip':(isCorrect?'correct':'wrong')}">
+      <strong>${isSkip?'⏭ لم تجب':(isCorrect?'✅ صحيح':'❌ خطأ')}</strong> · ${MATH_SECTIONS.find(s=>s.id===q.section)?.name}<br>
+      <div style="margin:10px 0; font-weight:600;">${q.q}</div>
+      ${!isSkip && !isCorrect ? `<div style="margin:10px 0;">❌ إجابتك: ${letters[ua]}. ${q.options[ua]}</div>` : ''}
+      <div style="background:#eaf7ea; padding:10px; border-radius:12px;">✅ الإجابة الصحيحة: ${letters[q.correct]}. ${q.options[q.correct]}</div>
+      <div class="explain-box"><strong>💡 شرح:</strong> ${q.exp}</div>
+    </div>`;
+  }).join('');
+}
+function filterReview(type, btn) { document.querySelectorAll('.filter-tab').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); document.querySelectorAll('.review-item').forEach(card=>{ card.style.display = (type==='all' || card.dataset.status===type) ? 'block':'none'; }); }
+function startRetestWrong() { if (state.wrongIds.length===0) return; switchScreen('homeScreen'); setTimeout(()=> startExam(true), 50); }
+function restartSameExam() { switchScreen('homeScreen'); setTimeout(()=> startExam(false), 50); }
+document.addEventListener('DOMContentLoaded', ()=>{ renderHome(); selectSection('all'); });
+</script>
+</body>
+</html>
